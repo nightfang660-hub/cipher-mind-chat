@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, User, Shield, Terminal, CheckCircle, XCircle, Mail } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,6 +41,29 @@ const Signup: React.FC = () => {
       noCommon: false
     }
   });
+  const navigate = useNavigate();
+
+  // Check if user is already logged in and handle auth state changes
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/chat');
+      }
+    };
+    checkAuth();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          navigate('/chat');
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const terminalMessages = [
     '> INITIALIZING REGISTRATION PROTOCOL...',
@@ -109,16 +133,40 @@ const Signup: React.FC = () => {
     e.preventDefault();
     
     if (passwordStrength.score < 6) {
+      console.error('Password does not meet security requirements');
       return;
     }
     
     if (formData.password !== formData.confirmPassword) {
+      console.error('Passwords do not match');
       return;
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    setIsLoading(false);
+    
+    try {
+      const redirectUrl = `${window.location.origin}/chat`;
+      
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+
+      if (error) {
+        console.error('Signup error:', error.message);
+        // You can add toast notification here
+      } else {
+        // User will be redirected by auth state change listener
+        console.log('Signup successful! Check email for confirmation.');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getStrengthColor = (score: number) => {
