@@ -35,10 +35,10 @@ serve(async (req) => {
           }]
         }],
         generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
+          temperature: 0.5,
+          topK: 20,
+          topP: 0.85,
+          maxOutputTokens: 1024,
         },
       }),
     });

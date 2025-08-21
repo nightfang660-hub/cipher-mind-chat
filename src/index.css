@@ -228,4 +228,34 @@ All colors MUST be HSL.
   .status-secure {
     @apply text-primary text-glow;
   }
+  
+  /* Enhanced Scrolling */
+  .enhanced-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.6) hsl(var(--background));
+  }
+  
+  .enhanced-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .enhanced-scroll::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+    border-radius: 4px;
+  }
+  
+  .enhanced-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.6), hsl(var(--primary) / 0.3));
+    border-radius: 4px;
+    border: 1px solid hsl(var(--primary) / 0.2);
+  }
+  
+  .enhanced-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.8), hsl(var(--primary) / 0.5));
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.3);
+  }
+  
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
 }
