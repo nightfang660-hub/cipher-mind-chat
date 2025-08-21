@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles } from 'lucide-react';
+import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import MatrixRain from '@/components/MatrixRain';
+import TypewriterText from '@/components/TypewriterText';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { User as UserType, Session } from '@supabase/supabase-js';
@@ -18,6 +19,13 @@ interface Message {
   content: string;
   isUser: boolean;
   timestamp: Date;
+}
+
+interface Conversation {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface Profile {
@@ -34,7 +42,9 @@ const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [chatHistory, setChatHistory] = useState(['Welcome to HackVibe']);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -51,6 +61,7 @@ const Chat: React.FC = () => {
           // Fetch user profile when session is available
           setTimeout(() => {
             fetchUserProfile(session.user.id);
+            loadConversations();
           }, 0);
         }
       }
@@ -65,6 +76,7 @@ const Chat: React.FC = () => {
         navigate('/login');
       } else {
         fetchUserProfile(session.user.id);
+        loadConversations();
       }
     });
 
@@ -90,6 +102,115 @@ const Chat: React.FC = () => {
     }
   };
 
+  const loadConversations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error loading conversations:', error);
+        return;
+      }
+      
+      setConversations(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const loadConversation = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+      
+      if (error) {
+        console.error('Error loading messages:', error);
+        return;
+      }
+      
+      const loadedMessages: Message[] = data?.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        isUser: msg.is_user,
+        timestamp: new Date(msg.created_at)
+      })) || [];
+      
+      setMessages(loadedMessages);
+      setCurrentConversationId(conversationId);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const createNewConversation = async (firstMessage: string) => {
+    try {
+      const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
+      
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: user?.id,
+          title: title
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error creating conversation:', error);
+        return null;
+      }
+      
+      setCurrentConversationId(data.id);
+      loadConversations();
+      return data.id;
+    } catch (error) {
+      console.error('Error:', error);
+      return null;
+    }
+  };
+
+  const saveMessage = async (conversationId: string, content: string, isUser: boolean) => {
+    try {
+      await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          content: content,
+          is_user: isUser
+        });
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+  };
+
+  const deleteConversation = async (conversationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('id', conversationId);
+      
+      if (error) {
+        console.error('Error deleting conversation:', error);
+        return;
+      }
+      
+      if (currentConversationId === conversationId) {
+        setMessages([]);
+        setCurrentConversationId(null);
+      }
+      
+      loadConversations();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -109,7 +230,16 @@ const Chat: React.FC = () => {
       timestamp: new Date()
     };
 
+    let conversationId = currentConversationId;
+    
+    // Create new conversation if none exists
+    if (!conversationId) {
+      conversationId = await createNewConversation(inputMessage);
+      if (!conversationId) return;
+    }
+
     setMessages(prev => [...prev, userMessage]);
+    await saveMessage(conversationId, userMessage.content, true);
     setInputMessage('');
     setIsLoading(true);
 
@@ -131,6 +261,8 @@ const Chat: React.FC = () => {
       };
       
       setMessages(prev => [...prev, aiMessage]);
+      setTypingMessageId(aiMessage.id);
+      await saveMessage(conversationId, aiMessage.content, false);
     } catch (error) {
       console.error('Error getting AI response:', error);
       const errorMessage: Message = {
@@ -140,6 +272,9 @@ const Chat: React.FC = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
+      if (conversationId) {
+        await saveMessage(conversationId, errorMessage.content, false);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -179,9 +314,12 @@ const Chat: React.FC = () => {
             <MessageSquare className="w-5 h-5 text-primary" />
             <span className="font-mono text-primary">CHAT_HISTORY.LOG</span>
           </div>
-          <Button 
+            <Button 
             className="w-full btn-matrix font-mono text-xs"
-            onClick={() => setMessages([])}
+            onClick={() => {
+              setMessages([]);
+              setCurrentConversationId(null);
+            }}
           >
             + NEW CONVERSATION
           </Button>
@@ -190,14 +328,41 @@ const Chat: React.FC = () => {
         {/* Chat History List */}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-2">
-            {chatHistory.map((chat, index) => (
-              <Card key={index} className="terminal-border bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors">
+            {conversations.map((conversation) => (
+              <Card 
+                key={conversation.id} 
+                className="terminal-border bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
+                onClick={() => loadConversation(conversation.id)}
+              >
                 <CardContent className="p-3">
-                  <div className="text-xs font-mono text-primary/80 truncate">
-                    {chat}
-                  </div>
-                  <div className="text-xs text-muted-foreground font-mono mt-1">
-                    {new Date().toLocaleDateString()}
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-mono text-primary/80 truncate">
+                        {conversation.title}
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono mt-1">
+                        {new Date(conversation.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0">
+                          <MoreHorizontal className="w-3 h-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="terminal-border bg-card">
+                        <DropdownMenuItem 
+                          className="font-mono text-xs text-hacker"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteConversation(conversation.id);
+                          }}
+                        >
+                          <Trash2 className="w-3 h-3 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </CardContent>
               </Card>
@@ -287,7 +452,14 @@ const Chat: React.FC = () => {
                     <Card className={`terminal-border ${message.isUser ? 'bg-primary/20' : 'bg-secondary/50'}`}>
                       <CardContent className="p-4">
                         <div className="font-mono text-sm whitespace-pre-wrap">
-                          {message.content}
+                          {!message.isUser && typingMessageId === message.id ? (
+                            <TypewriterText 
+                              text={message.content} 
+                              onComplete={() => setTypingMessageId(null)}
+                            />
+                          ) : (
+                            message.content
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground font-mono mt-2">
                           {message.timestamp.toLocaleTimeString()}

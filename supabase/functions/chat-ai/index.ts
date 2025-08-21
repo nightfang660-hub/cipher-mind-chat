@@ -52,7 +52,10 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Gemini response:', data);
 
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.';
+    let aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.';
+    
+    // Clean up response - remove asterisks and other unwanted formatting
+    aiResponse = aiResponse.replace(/\*/g, '').replace(/\#/g, '').trim();
 
     return new Response(JSON.stringify({ response: aiResponse }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
