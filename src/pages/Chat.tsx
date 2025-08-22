@@ -433,11 +433,11 @@ const Chat: React.FC = () => {
           </DropdownMenu>
         </div>
 
-        {/* Messages Area - Fixed Height with Internal Scrolling */}
+        {/* Messages Area - ChatGPT Style Scrolling */}
         <div className="flex-1 relative bg-background/50 overflow-hidden">
-          <ScrollArea className="h-full chat-scroll smooth-scroll">
-            <div className="p-4 pb-20">
-              <div className="max-w-4xl mx-auto space-y-4 min-h-full">
+          <div className="h-full overflow-y-auto chat-messages-container">
+            <div className="p-4 space-y-4">
+              <div className="max-w-4xl mx-auto">
                 {messages.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-primary font-mono text-xl mb-2">
@@ -509,7 +509,7 @@ const Chat: React.FC = () => {
                 <div ref={messagesEndRef} />
               </div>
             </div>
-          </ScrollArea>
+          </div>
         </div>
 
         {/* Input Area */}

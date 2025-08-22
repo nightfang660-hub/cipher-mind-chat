@@ -293,4 +293,38 @@ All colors MUST be HSL.
   .smooth-scroll {
     scroll-behavior: smooth;
   }
+  
+  /* ChatGPT-style Chat Container */
+  .chat-messages-container {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    scroll-behavior: smooth;
+    transition: scrollbar-color 0.3s ease;
+  }
+  
+  .chat-messages-container:hover {
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  
+  .chat-messages-container::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .chat-messages-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .chat-messages-container::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 3px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .chat-messages-container:hover::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+  }
+  
+  .chat-messages-container::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground));
+  }
 }
