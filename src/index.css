@@ -294,38 +294,40 @@ All colors MUST be HSL.
     scroll-behavior: smooth;
   }
   
-  /* ChatGPT-style Chat Container with Always Visible Scrollbar */
-  .chat-messages-container {
+  /* Matrix Chat Container with Neon Green Scrollbar */
+  .matrix-chat-container {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--border) / 0.3) transparent;
+    scrollbar-color: #00FF00 #000000;
     scroll-behavior: smooth;
   }
   
-  .chat-messages-container:hover {
-    scrollbar-color: hsl(var(--border)) transparent;
+  .matrix-chat-container::-webkit-scrollbar {
+    width: 12px;
+    background-color: #000000;
+    border-radius: 6px;
   }
   
-  .chat-messages-container::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  .chat-messages-container::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 4px;
+  .matrix-chat-container::-webkit-scrollbar-track {
+    background-color: #000000;
+    border: 1px solid #333333;
+    border-radius: 6px;
     margin: 4px 0;
   }
   
-  .chat-messages-container::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--border) / 0.3);
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
+  .matrix-chat-container::-webkit-scrollbar-thumb {
+    background-color: #00FF00;
+    border: 2px solid #000000;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 8px #00FF00;
   }
   
-  .chat-messages-container:hover::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--border));
+  .matrix-chat-container::-webkit-scrollbar-thumb:hover {
+    background-color: #00FF80;
+    box-shadow: 0 0 12px #00FF00;
   }
   
-  .chat-messages-container::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.8);
+  .matrix-chat-container::-webkit-scrollbar-corner {
+    background-color: #000000;
   }
 }

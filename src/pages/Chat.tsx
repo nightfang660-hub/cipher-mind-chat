@@ -386,9 +386,9 @@ const Chat: React.FC = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Header with Profile */}
-        <div className="p-4 terminal-border bg-card/80 backdrop-blur-sm flex items-center justify-between">
+      <div className="flex-1 flex flex-col h-screen">
+        {/* Fixed Top Header with Profile */}
+        <div className="flex-shrink-0 p-4 terminal-border bg-card/80 backdrop-blur-sm flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-primary font-mono">
               HACKVIBE_TERMINAL.EXE
@@ -433,10 +433,10 @@ const Chat: React.FC = () => {
           </DropdownMenu>
         </div>
 
-        {/* Messages Area - ChatGPT Style Scrolling */}
-        <div className="flex-1 relative bg-background/50 overflow-hidden">
-          <div className="h-full overflow-y-auto chat-messages-container">
-            <div className="p-4 space-y-4">
+        {/* Scrollable Messages Area - ChatGPT Style */}
+        <div className="flex-1 overflow-hidden bg-background/50 relative">
+          <div className="h-full overflow-y-auto matrix-chat-container">
+            <div className="p-4 space-y-4 min-h-full">
               <div className="max-w-4xl mx-auto">
                 {messages.length === 0 ? (
                   <div className="text-center py-12">
@@ -512,8 +512,8 @@ const Chat: React.FC = () => {
           </div>
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 terminal-border bg-card/90 backdrop-blur-sm">
+        {/* Fixed Bottom Input Area */}
+        <div className="flex-shrink-0 p-4 terminal-border bg-card/90 backdrop-blur-sm">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-end gap-3">
               <div className="flex-1">
