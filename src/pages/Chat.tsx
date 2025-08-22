@@ -434,7 +434,7 @@ const Chat: React.FC = () => {
         </div>
 
         {/* Messages Area */}
-        <ScrollArea className="flex-1 p-4 bg-background/50 enhanced-scroll smooth-scroll">
+        <ScrollArea className="flex-1 p-4 bg-background/50 chat-scroll smooth-scroll">
           <div className="max-w-4xl mx-auto space-y-4">
             {messages.length === 0 ? (
               <div className="text-center py-12">
