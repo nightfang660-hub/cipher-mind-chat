@@ -433,80 +433,84 @@ const Chat: React.FC = () => {
           </DropdownMenu>
         </div>
 
-        {/* Messages Area */}
-        <ScrollArea className="flex-1 p-4 bg-background/50 chat-scroll smooth-scroll">
-          <div className="max-w-4xl mx-auto space-y-4">
-            {messages.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-primary font-mono text-xl mb-2">
-                  SYSTEM READY
-                </div>
-                <div className="text-muted-foreground font-mono text-sm">
-                  Enter your query to begin hacking reality...
-                </div>
-              </div>
-            ) : (
-              messages.map((message) => (
-                <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] ${message.isUser ? 'order-2' : 'order-1'}`}>
-                    <Card className={`terminal-border ${message.isUser ? 'bg-primary/20' : 'bg-secondary/50'}`}>
-                      <CardContent className="p-4">
-                        <div className="font-mono text-sm whitespace-pre-wrap">
-                          {!message.isUser && typingMessageId === message.id ? (
-                            <TypewriterText 
-                              text={message.content} 
-                              onComplete={() => setTypingMessageId(null)}
-                            />
-                          ) : (
-                            message.content
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground font-mono mt-2">
-                          {message.timestamp.toLocaleTimeString()}
-                        </div>
-                      </CardContent>
-                    </Card>
+        {/* Messages Area - Fixed Height with Internal Scrolling */}
+        <div className="flex-1 relative bg-background/50 overflow-hidden">
+          <ScrollArea className="h-full chat-scroll smooth-scroll">
+            <div className="p-4 pb-20">
+              <div className="max-w-4xl mx-auto space-y-4 min-h-full">
+                {messages.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-primary font-mono text-xl mb-2">
+                      SYSTEM READY
+                    </div>
+                    <div className="text-muted-foreground font-mono text-sm">
+                      Enter your query to begin hacking reality...
+                    </div>
                   </div>
-                  <div className={`flex items-end mx-3 ${message.isUser ? 'order-1' : 'order-2'}`}>
-                    <Avatar className="w-8 h-8">
-                      {message.isUser ? (
-                        <>
-                          <AvatarImage src={profile?.avatar_url || undefined} />
-                          <AvatarFallback className="bg-primary text-primary-foreground font-mono text-xs">
-                            {profile?.username?.charAt(0).toUpperCase() || 'U'}
-                          </AvatarFallback>
-                        </>
-                      ) : (
-                        <AvatarFallback className="bg-hacker text-black font-mono text-xs">
-                          AI
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                  </div>
-                </div>
-              ))
-            )}
-            
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="max-w-[70%]">
-                  <Card className="terminal-border bg-secondary/50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 font-mono text-sm">
-                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-                        <span className="ml-2 text-primary">Processing...</span>
+                ) : (
+                  messages.map((message) => (
+                    <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[70%] ${message.isUser ? 'order-2' : 'order-1'}`}>
+                        <Card className={`terminal-border ${message.isUser ? 'bg-primary/20' : 'bg-secondary/50'}`}>
+                          <CardContent className="p-4">
+                            <div className="font-mono text-sm whitespace-pre-wrap">
+                              {!message.isUser && typingMessageId === message.id ? (
+                                <TypewriterText 
+                                  text={message.content} 
+                                  onComplete={() => setTypingMessageId(null)}
+                                />
+                              ) : (
+                                message.content
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-mono mt-2">
+                              {message.timestamp.toLocaleTimeString()}
+                            </div>
+                          </CardContent>
+                        </Card>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                      <div className={`flex items-end mx-3 ${message.isUser ? 'order-1' : 'order-2'}`}>
+                        <Avatar className="w-8 h-8">
+                          {message.isUser ? (
+                            <>
+                              <AvatarImage src={profile?.avatar_url || undefined} />
+                              <AvatarFallback className="bg-primary text-primary-foreground font-mono text-xs">
+                                {profile?.username?.charAt(0).toUpperCase() || 'U'}
+                              </AvatarFallback>
+                            </>
+                          ) : (
+                            <AvatarFallback className="bg-hacker text-black font-mono text-xs">
+                              AI
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                      </div>
+                    </div>
+                  ))
+                )}
+                
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[70%]">
+                      <Card className="terminal-border bg-secondary/50">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 font-mono text-sm">
+                            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                            <div className="w-2 h-2 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                            <div className="w-2 h-2 bg-hacker rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                            <span className="ml-2 text-muted-foreground">AI is processing...</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
               </div>
-            )}
-            
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
+            </div>
+          </ScrollArea>
+        </div>
 
         {/* Input Area */}
         <div className="p-4 terminal-border bg-card/90 backdrop-blur-sm">
