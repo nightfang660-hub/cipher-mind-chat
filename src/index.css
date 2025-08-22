@@ -294,12 +294,11 @@ All colors MUST be HSL.
     scroll-behavior: smooth;
   }
   
-  /* ChatGPT-style Chat Container */
+  /* ChatGPT-style Chat Container with Always Visible Scrollbar */
   .chat-messages-container {
     scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
+    scrollbar-color: hsl(var(--border) / 0.3) transparent;
     scroll-behavior: smooth;
-    transition: scrollbar-color 0.3s ease;
   }
   
   .chat-messages-container:hover {
@@ -307,17 +306,19 @@ All colors MUST be HSL.
   }
   
   .chat-messages-container::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
   
   .chat-messages-container::-webkit-scrollbar-track {
     background: transparent;
+    border-radius: 4px;
+    margin: 4px 0;
   }
   
   .chat-messages-container::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-radius: 3px;
-    transition: background-color 0.3s ease;
+    background-color: hsl(var(--border) / 0.3);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
   }
   
   .chat-messages-container:hover::-webkit-scrollbar-thumb {
@@ -325,6 +326,6 @@ All colors MUST be HSL.
   }
   
   .chat-messages-container::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground));
+    background-color: hsl(var(--muted-foreground) / 0.8);
   }
 }
