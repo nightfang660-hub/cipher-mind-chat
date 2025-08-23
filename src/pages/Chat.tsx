@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import MatrixRain from '@/components/MatrixRain';
 import TypewriterText from '@/components/TypewriterText';
+import CodeBlock from '@/components/CodeBlock';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { User as UserType, Session } from '@supabase/supabase-js';
@@ -47,6 +48,43 @@ const Chat: React.FC = () => {
   const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Function to parse message content and detect code blocks
+  const parseMessageContent = (content: string) => {
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    const parts: Array<{ type: 'text' | 'code'; content: string; language?: string }> = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      // Add text before code block
+      if (match.index > lastIndex) {
+        const textContent = content.slice(lastIndex, match.index);
+        if (textContent.trim()) {
+          parts.push({ type: 'text', content: textContent });
+        }
+      }
+
+      // Add code block
+      parts.push({
+        type: 'code',
+        content: match[2],
+        language: match[1] || 'text'
+      });
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+      const textContent = content.slice(lastIndex);
+      if (textContent.trim()) {
+        parts.push({ type: 'text', content: textContent });
+      }
+    }
+
+    return parts.length > 0 ? parts : [{ type: 'text', content }];
+  };
 
   useEffect(() => {
     // Set up auth state listener
@@ -449,28 +487,9 @@ const Chat: React.FC = () => {
                   </div>
                 ) : (
                   messages.map((message) => (
-                    <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] ${message.isUser ? 'order-2' : 'order-1'}`}>
-                        <Card className={`terminal-border ${message.isUser ? 'bg-primary/20' : 'bg-secondary/50'}`}>
-                          <CardContent className="p-4">
-                            <div className="font-mono text-sm whitespace-pre-wrap">
-                              {!message.isUser && typingMessageId === message.id ? (
-                                <TypewriterText 
-                                  text={message.content} 
-                                  onComplete={() => setTypingMessageId(null)}
-                                />
-                              ) : (
-                                message.content
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground font-mono mt-2">
-                              {message.timestamp.toLocaleTimeString()}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                      <div className={`flex items-end mx-3 ${message.isUser ? 'order-1' : 'order-2'}`}>
-                        <Avatar className="w-8 h-8">
+                    <div key={message.id} className="mb-6">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="w-8 h-8 flex-shrink-0">
                           {message.isUser ? (
                             <>
                               <AvatarImage src={profile?.avatar_url || undefined} />
@@ -484,24 +503,64 @@ const Chat: React.FC = () => {
                             </AvatarFallback>
                           )}
                         </Avatar>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-mono text-xs font-semibold" style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}>
+                              {message.isUser ? (profile?.username || user.email?.split('@')[0] || 'User') : 'AI Assistant'}
+                            </span>
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {message.timestamp.toLocaleTimeString()}
+                            </span>
+                          </div>
+                          
+                          <div className="font-mono text-sm" style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}>
+                            {!message.isUser && typingMessageId === message.id ? (
+                              <TypewriterText 
+                                text={message.content} 
+                                onComplete={() => setTypingMessageId(null)}
+                              />
+                            ) : (
+                              parseMessageContent(message.content).map((part, index) => (
+                                <React.Fragment key={index}>
+                                  {part.type === 'text' ? (
+                                    <div className="whitespace-pre-wrap">{part.content}</div>
+                                  ) : (
+                                    <CodeBlock language={part.language} code={part.content} />
+                                  )}
+                                </React.Fragment>
+                              ))
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))
                 )}
                 
                 {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[70%]">
-                      <Card className="terminal-border bg-secondary/50">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 font-mono text-sm">
-                            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                            <div className="w-2 h-2 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                            <div className="w-2 h-2 bg-hacker rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-                            <span className="ml-2 text-muted-foreground">AI is processing...</span>
-                          </div>
-                        </CardContent>
-                      </Card>
+                  <div className="mb-6">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="w-8 h-8 flex-shrink-0">
+                        <AvatarFallback className="bg-hacker text-black font-mono text-xs">
+                          AI
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-xs font-semibold" style={{ color: '#00FF00' }}>
+                            AI Assistant
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 font-mono text-sm" style={{ color: '#00FF00' }}>
+                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                          <div className="w-2 h-2 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                          <div className="w-2 h-2 bg-hacker rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                          <span className="ml-2">Processing your request...</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
