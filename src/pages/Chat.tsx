@@ -46,7 +46,10 @@ const Chat: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const navigate = useNavigate();
 
   // Function to parse message content and detect code blocks
@@ -326,8 +329,16 @@ const Chat: React.FC = () => {
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, shouldAutoScroll]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShouldAutoScroll(isNearBottom);
+  };
 
   if (!user || !session) {
     return (
@@ -338,103 +349,108 @@ const Chat: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen relative flex">
+    <div className="h-screen overflow-hidden relative flex">
       <MatrixRain />
       
       {/* Scanlines overlay */}
       <div className="fixed inset-0 pointer-events-none scanlines opacity-10" />
       
+      {/* Floating Toggle Button - Middle Left Edge */}
+      <div className="fixed left-0 top-1/2 transform -translate-y-1/2 z-50">
+        <Button
+          onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+          className="bg-background/90 border terminal-border text-primary hover:bg-primary/10 
+                     rounded-none rounded-r-lg px-2 py-4 font-mono text-xs
+                     shadow-lg backdrop-blur-sm transition-all duration-300"
+          style={{ writingMode: 'horizontal-tb' }}
+        >
+          {isHistoryOpen ? '[<]' : '[>]'}
+        </Button>
+      </div>
+      
       {/* Left Sidebar - Chat History */}
-      <div className="w-80 terminal-border bg-card/90 backdrop-blur-md flex flex-col">
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            <span className="font-mono text-primary">CHAT_HISTORY.LOG</span>
-          </div>
-            <Button 
-            className="w-full btn-matrix font-mono text-xs"
-            onClick={() => {
-              setMessages([]);
-              setCurrentConversationId(null);
-            }}
-          >
-            + NEW CONVERSATION
-          </Button>
-        </div>
-        
-        {/* Chat History List */}
-        <ScrollArea className="flex-1 p-4 enhanced-scroll">
-          <div className="space-y-2">
-            {conversations.map((conversation) => (
-              <Card 
-                key={conversation.id} 
-                className="terminal-border bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
-                onClick={() => loadConversation(conversation.id)}
+      <div className={`${isHistoryOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden
+                      terminal-border bg-card/90 backdrop-blur-md flex flex-col`}>
+        {isHistoryOpen && (
+          <>
+            {/* Sidebar Header */}
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center gap-2 mb-3">
+                <History className="w-4 h-4 text-primary" />
+                <span className="font-mono text-primary text-sm">HISTORY</span>
+              </div>
+              <Button 
+                className="w-full btn-matrix font-mono text-xs"
+                onClick={() => {
+                  setMessages([]);
+                  setCurrentConversationId(null);
+                }}
               >
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-mono text-primary/80 truncate">
-                        {conversation.title}
+                + NEW SESSION
+              </Button>
+            </div>
+            
+            {/* Chat History List */}
+            <ScrollArea className="flex-1 p-4 enhanced-scroll">
+              <div className="space-y-2">
+                {conversations.map((conversation) => (
+                  <Card 
+                    key={conversation.id} 
+                    className="terminal-border bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
+                    onClick={() => loadConversation(conversation.id)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-mono text-primary/80 truncate">
+                            {conversation.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground font-mono mt-1">
+                            {new Date(conversation.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0">
+                              <MoreHorizontal className="w-3 h-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="terminal-border bg-card">
+                            <DropdownMenuItem 
+                              className="font-mono text-xs text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteConversation(conversation.id);
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <div className="text-xs text-muted-foreground font-mono mt-1">
-                        {new Date(conversation.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0">
-                          <MoreHorizontal className="w-3 h-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="terminal-border bg-card">
-                        <DropdownMenuItem 
-                          className="font-mono text-xs text-hacker"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteConversation(conversation.id);
-                          }}
-                        >
-                          <Trash2 className="w-3 h-3 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </ScrollArea>
-        
-        {/* Advanced Features */}
-        <div className="p-4 border-t border-border">
-          <div className="space-y-2">
-            <Button variant="outline" className="w-full font-mono text-xs" size="sm">
-              <Sparkles className="w-4 h-4 mr-2" />
-              ADVANCED MODE
-            </Button>
-            <Button variant="outline" className="w-full font-mono text-xs" size="sm">
-              <History className="w-4 h-4 mr-2" />
-              EXPORT LOGS
-            </Button>
-          </div>
-        </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          </>
+        )}
       </div>
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-screen">
-        {/* Fixed Top Header with Profile */}
-        <div className="flex-shrink-0 p-4 terminal-border bg-card/80 backdrop-blur-sm flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="text-primary font-mono">
-              HACKVIBE_TERMINAL.EXE
+        {/* Fixed Top Header */}
+        <div className="flex-shrink-0 p-4 terminal-border bg-card/80 backdrop-blur-sm 
+                        flex items-center justify-between border-b border-border">
+          <div className="flex items-center gap-4">
+            <div className="text-primary font-mono font-semibold">
+              TERMINAL://CHAT
             </div>
             <div className="flex gap-1">
-              <div className="w-2 h-2 bg-hacker rounded-full" />
-              <div className="w-2 h-2 bg-accent rounded-full" />
-              <div className="w-2 h-2 bg-primary rounded-full status-online" />
+              <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
             </div>
           </div>
           
@@ -463,7 +479,7 @@ const Chat: React.FC = () => {
                 Change Avatar
               </DropdownMenuItem>
               <Separator className="my-1" />
-              <DropdownMenuItem className="font-mono text-hacker" onClick={handleSignOut}>
+              <DropdownMenuItem className="font-mono text-destructive" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </DropdownMenuItem>
@@ -471,108 +487,93 @@ const Chat: React.FC = () => {
           </DropdownMenu>
         </div>
 
-        {/* Scrollable Messages Area - ChatGPT Style */}
-        <div className="flex-1 overflow-hidden bg-background/50 relative">
-          <div className="h-full overflow-y-auto matrix-chat-container">
-            <div className="p-4 space-y-4 min-h-full">
-              <div className="max-w-4xl mx-auto">
-                {messages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="text-primary font-mono text-xl mb-2">
-                      SYSTEM READY
-                    </div>
+        {/* Scrollable Chat Area */}
+        <div className="flex-1 overflow-hidden relative">
+          <div 
+            ref={chatContainerRef}
+            className="h-full overflow-y-auto matrix-chat-container px-6 py-4"
+            onScroll={handleScroll}
+          >
+            <div className="max-w-4xl mx-auto space-y-6">
+              {messages.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="text-primary font-mono text-2xl mb-3 text-glow">
+                    SYSTEM_READY
+                  </div>
                     <div className="text-muted-foreground font-mono text-sm">
-                      Enter your query to begin hacking reality...
+                      {"> Initialize query to begin terminal session..."}
                     </div>
-                  </div>
-                ) : (
-                  messages.map((message) => (
-                    <div key={message.id} className="mb-6">
-                      <div className="flex items-start gap-3">
-                        <Avatar className="w-8 h-8 flex-shrink-0">
-                          {message.isUser ? (
-                            <>
-                              <AvatarImage src={profile?.avatar_url || undefined} />
-                              <AvatarFallback className="bg-primary text-primary-foreground font-mono text-xs">
-                                {profile?.username?.charAt(0).toUpperCase() || 'U'}
-                              </AvatarFallback>
-                            </>
-                          ) : (
-                            <AvatarFallback className="bg-hacker text-black font-mono text-xs">
-                              AI
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-mono text-xs font-semibold" style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}>
-                              {message.isUser ? (profile?.username || user.email?.split('@')[0] || 'User') : 'AI Assistant'}
-                            </span>
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {message.timestamp.toLocaleTimeString()}
-                            </span>
-                          </div>
-                          
-                          <div className="font-mono text-sm" style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}>
-                            {!message.isUser && typingMessageId === message.id ? (
-                              <TypewriterText 
-                                text={message.content} 
-                                onComplete={() => setTypingMessageId(null)}
-                              />
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <div key={message.id} className={`${message.isUser ? 'text-right' : 'text-left'}`}>
+                    {/* Message Header */}
+                    <div className={`flex items-center gap-2 mb-2 ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {message.timestamp.toLocaleTimeString()}
+                      </span>
+                      <span className="font-mono text-xs font-semibold" 
+                            style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}>
+                        {message.isUser ? 
+                          `> ${profile?.username || user.email?.split('@')[0] || 'USER'}` : 
+                          '< AI_ASSISTANT'
+                        }
+                      </span>
+                    </div>
+                    
+                    {/* Message Content */}
+                    <div className={`font-mono text-sm leading-relaxed ${message.isUser ? 'text-right' : 'text-left'}`} 
+                         style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}>
+                      {!message.isUser && typingMessageId === message.id ? (
+                        <TypewriterText 
+                          text={message.content} 
+                          onComplete={() => setTypingMessageId(null)}
+                        />
+                      ) : (
+                        parseMessageContent(message.content).map((part, index) => (
+                          <React.Fragment key={index}>
+                            {part.type === 'text' ? (
+                              <div className="whitespace-pre-wrap">{part.content}</div>
                             ) : (
-                              parseMessageContent(message.content).map((part, index) => (
-                                <React.Fragment key={index}>
-                                  {part.type === 'text' ? (
-                                    <div className="whitespace-pre-wrap">{part.content}</div>
-                                  ) : (
-                                    <CodeBlock language={part.language} code={part.content} />
-                                  )}
-                                </React.Fragment>
-                              ))
+                              <div className={message.isUser ? 'text-left' : ''}>
+                                <CodeBlock language={part.language} code={part.content} />
+                              </div>
                             )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-                
-                {isLoading && (
-                  <div className="mb-6">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarFallback className="bg-hacker text-black font-mono text-xs">
-                          AI
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-mono text-xs font-semibold" style={{ color: '#00FF00' }}>
-                            AI Assistant
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 font-mono text-sm" style={{ color: '#00FF00' }}>
-                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                          <div className="w-2 h-2 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                          <div className="w-2 h-2 bg-hacker rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-                          <span className="ml-2">Processing your request...</span>
-                        </div>
-                      </div>
+                          </React.Fragment>
+                        ))
+                      )}
                     </div>
                   </div>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </div>
+                ))
+              )}
+              
+              {isLoading && (
+                <div className="text-left">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {new Date().toLocaleTimeString()}
+                    </span>
+                    <span className="font-mono text-xs font-semibold" style={{ color: '#00FF00' }}>
+                      {"< AI_ASSISTANT"}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 font-mono text-sm" style={{ color: '#00FF00' }}>
+                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                    <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                    <span className="ml-2">Processing request...</span>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
             </div>
           </div>
         </div>
 
         {/* Fixed Bottom Input Area */}
-        <div className="flex-shrink-0 p-4 terminal-border bg-card/90 backdrop-blur-sm">
+        <div className="flex-shrink-0 p-4 terminal-border bg-card/90 backdrop-blur-sm border-t border-border">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-end gap-3">
               <div className="flex-1">
@@ -580,15 +581,16 @@ const Chat: React.FC = () => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
-                  className="input-terminal font-mono resize-none min-h-[50px] max-h-[120px]"
+                  placeholder="> Enter command... (Enter to execute, Shift+Enter for new line)"
+                  className="input-terminal font-mono resize-none min-h-[50px] max-h-[120px] 
+                           bg-background/50 border-primary/30 text-primary placeholder:text-muted-foreground"
                   rows={2}
                 />
               </div>
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className="btn-matrix px-4 py-2 h-[50px]"
+                className="btn-matrix px-4 py-2 h-[50px] font-mono"
               >
                 <Send className="w-4 h-4" />
               </Button>
@@ -596,7 +598,7 @@ const Chat: React.FC = () => {
             
             <div className="flex items-center justify-between mt-2 text-xs font-mono">
               <div className="text-muted-foreground">
-                STATUS: <span className="text-primary">SECURE CONNECTION ACTIVE</span>
+                STATUS: <span className="text-primary">SECURE_CONNECTION_ACTIVE</span>
               </div>
               <div className="text-muted-foreground">
                 {inputMessage.length}/2000 chars
