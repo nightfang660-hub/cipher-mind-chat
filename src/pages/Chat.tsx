@@ -506,36 +506,42 @@ const Chat: React.FC = () => {
                 </div>
               ) : (
                 messages.map((message) => (
-                  <div key={message.id} className={`${message.isUser ? 'text-right' : 'text-left'}`}>
-                    {/* Message Header */}
-                    <div className={`flex items-center gap-2 mb-2 ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                  <div key={message.id} className={`mb-6 ${message.isUser ? 'text-right' : 'text-left'}`}>
+                    {/* Terminal Header */}
+                    <div className={`flex items-center gap-2 mb-1 ${message.isUser ? 'justify-end' : 'justify-start'}`}>
                       <span className="font-mono text-xs text-muted-foreground">
-                        {message.timestamp.toLocaleTimeString()}
+                        [{message.timestamp.toLocaleTimeString()}]
                       </span>
-                      <span className="font-mono text-xs font-semibold" 
+                      <span className="font-mono text-xs font-bold" 
                             style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}>
                         {message.isUser ? 
-                          `> ${profile?.username || user.email?.split('@')[0] || 'USER'}` : 
-                          '< AI_ASSISTANT'
+                          `${profile?.username || user.email?.split('@')[0] || 'USER'}@terminal:~$` : 
+                          'AI_ASSISTANT@system:~$'
                         }
                       </span>
                     </div>
                     
-                    {/* Message Content */}
-                    <div className={`font-mono text-sm leading-relaxed ${message.isUser ? 'text-right' : 'text-left'}`} 
-                         style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}>
+                    {/* Terminal Message Content */}
+                    <div className={`font-mono text-sm leading-relaxed ${message.isUser ? 'text-right' : 'text-left'}`}>
                       {!message.isUser && typingMessageId === message.id ? (
-                        <TypewriterText 
-                          text={message.content} 
-                          onComplete={() => setTypingMessageId(null)}
-                        />
+                        <div style={{ color: '#00FF00' }}>
+                          <TypewriterText 
+                            text={message.content} 
+                            onComplete={() => setTypingMessageId(null)}
+                          />
+                        </div>
                       ) : (
                         parseMessageContent(message.content).map((part, index) => (
                           <React.Fragment key={index}>
                             {part.type === 'text' ? (
-                              <div className="whitespace-pre-wrap">{part.content}</div>
+                              <div 
+                                className="whitespace-pre-wrap"
+                                style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}
+                              >
+                                {part.content}
+                              </div>
                             ) : (
-                              <div className={message.isUser ? 'text-left' : ''}>
+                              <div className="my-4">
                                 <CodeBlock language={part.language} code={part.content} />
                               </div>
                             )}
