@@ -581,24 +581,23 @@ const Chat: React.FC = () => {
         {/* Fixed Bottom Input Area */}
         <div className="flex-shrink-0 p-4 terminal-border bg-card/90 backdrop-blur-sm border-t border-border">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-end gap-3">
-              <div className="flex-1">
-                <Textarea
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="> Enter command... (Enter to execute, Shift+Enter for new line)"
-                  className="input-terminal font-mono resize-none min-h-[50px] max-h-[120px] 
-                           bg-background/50 border-primary/30 text-primary placeholder:text-muted-foreground"
-                  rows={2}
-                />
-              </div>
+            <div className="flex-1 relative">
+              <Textarea
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="> Enter command... (Enter to execute, Shift+Enter for new line)"
+                className="input-terminal font-mono resize-none min-h-[50px] max-h-[120px] 
+                         bg-background/50 border-primary/30 text-primary placeholder:text-muted-foreground
+                         pr-12"
+                rows={2}
+              />
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className="btn-matrix px-4 py-2 h-[50px] font-mono"
+                className="absolute right-2 bottom-2 btn-matrix px-2 py-1 h-8 w-8 font-mono"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-3 h-3" />
               </Button>
             </div>
             
