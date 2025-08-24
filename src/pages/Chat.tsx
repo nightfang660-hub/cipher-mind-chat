@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import MatrixRain from '@/components/MatrixRain';
 import TypewriterText from '@/components/TypewriterText';
 import CodeBlock from '@/components/CodeBlock';
@@ -188,9 +189,15 @@ const Chat: React.FC = () => {
     }
   };
 
+  const generateConversationTitle = (firstMessage: string) => {
+    // Take first user message and truncate if longer than 30 characters
+    const cleanMessage = firstMessage.trim();
+    return cleanMessage.length > 30 ? cleanMessage.slice(0, 30) + '...' : cleanMessage;
+  };
+
   const createNewConversation = async (firstMessage: string) => {
     try {
-      const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
+      const title = generateConversationTitle(firstMessage);
       
       const { data, error } = await supabase
         .from('conversations')
@@ -393,22 +400,35 @@ const Chat: React.FC = () => {
             {/* Chat History List */}
             <ScrollArea className="flex-1 p-4 enhanced-scroll">
               <div className="space-y-2">
-                {conversations.map((conversation) => (
-                  <Card 
-                    key={conversation.id} 
-                    className="terminal-border bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
-                    onClick={() => loadConversation(conversation.id)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-mono text-primary/80 truncate">
-                            {conversation.title}
-                          </div>
-                          <div className="text-xs text-muted-foreground font-mono mt-1">
-                            {new Date(conversation.created_at).toLocaleDateString()}
-                          </div>
-                        </div>
+                 {conversations.map((conversation) => (
+                   <Card 
+                     key={conversation.id} 
+                     className="terminal-border bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
+                     onClick={() => loadConversation(conversation.id)}
+                   >
+                     <CardContent className="p-3">
+                       <div className="flex items-center justify-between">
+                         <div className="flex-1 min-w-0">
+                           <TooltipProvider>
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <div className="text-xs font-mono text-primary/80 truncate">
+                                   {conversation.title.length > 30 
+                                     ? conversation.title.slice(0, 30) + '...' 
+                                     : conversation.title}
+                                 </div>
+                               </TooltipTrigger>
+                               {conversation.title.length > 30 && (
+                                 <TooltipContent className="terminal-border bg-card font-mono text-xs max-w-xs">
+                                   <p>{conversation.title}</p>
+                                 </TooltipContent>
+                               )}
+                             </Tooltip>
+                           </TooltipProvider>
+                           <div className="text-xs text-muted-foreground font-mono mt-1">
+                             {new Date(conversation.created_at).toLocaleDateString()}
+                           </div>
+                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0">
