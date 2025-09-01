@@ -297,37 +297,37 @@ All colors MUST be HSL.
   /* Matrix Chat Container with Neon Green Scrollbar */
   .matrix-chat-container {
     scrollbar-width: thin;
-    scrollbar-color: #00FF00 #000000;
+    scrollbar-color: hsl(var(--matrix-green)) hsl(var(--background));
     scroll-behavior: smooth;
   }
   
   .matrix-chat-container::-webkit-scrollbar {
     width: 12px;
-    background-color: #000000;
+    background-color: hsl(var(--background));
     border-radius: 6px;
   }
   
   .matrix-chat-container::-webkit-scrollbar-track {
-    background-color: #000000;
-    border: 1px solid #333333;
+    background-color: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
     border-radius: 6px;
     margin: 4px 0;
   }
   
   .matrix-chat-container::-webkit-scrollbar-thumb {
-    background-color: #00FF00;
-    border: 2px solid #000000;
+    background-color: hsl(var(--matrix-green));
+    border: 2px solid hsl(var(--background));
     border-radius: 6px;
     transition: all 0.2s ease;
-    box-shadow: 0 0 8px #00FF00;
+    box-shadow: 0 0 8px hsl(var(--matrix-green) / 0.5);
   }
   
   .matrix-chat-container::-webkit-scrollbar-thumb:hover {
-    background-color: #00FF80;
-    box-shadow: 0 0 12px #00FF00;
+    background-color: hsl(var(--matrix-green-bright));
+    box-shadow: 0 0 12px hsl(var(--matrix-green) / 0.7);
   }
   
   .matrix-chat-container::-webkit-scrollbar-corner {
-    background-color: #000000;
+    background-color: hsl(var(--background));
   }
 }

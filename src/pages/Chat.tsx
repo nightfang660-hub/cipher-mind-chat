@@ -532,8 +532,7 @@ const Chat: React.FC = () => {
                       <span className="font-mono text-xs text-muted-foreground">
                         [{message.timestamp.toLocaleTimeString()}]
                       </span>
-                      <span className="font-mono text-xs font-bold" 
-                            style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}>
+                      <span className={`font-mono text-xs font-bold ${message.isUser ? 'text-matrix-green-bright' : 'text-matrix-green'}`}>
                         {message.isUser ? 
                           `${profile?.username || user.email?.split('@')[0] || 'USER'}@terminal:~$` : 
                           'AI_ASSISTANT@system:~$'
@@ -544,7 +543,7 @@ const Chat: React.FC = () => {
                     {/* Terminal Message Content */}
                     <div className={`font-mono text-sm leading-relaxed ${message.isUser ? 'text-right' : 'text-left'}`}>
                       {!message.isUser && typingMessageId === message.id ? (
-                        <div style={{ color: '#00FF00' }}>
+                        <div className="text-matrix-green">
                           <TypewriterText 
                             text={message.content} 
                             onComplete={() => setTypingMessageId(null)}
@@ -555,8 +554,7 @@ const Chat: React.FC = () => {
                           <React.Fragment key={index}>
                             {part.type === 'text' ? (
                               <div 
-                                className="whitespace-pre-wrap"
-                                style={{ color: message.isUser ? '#66ff66' : '#00FF00' }}
+                                className={`whitespace-pre-wrap ${message.isUser ? 'text-matrix-green-bright' : 'text-matrix-green'}`}
                               >
                                 {part.content}
                               </div>
@@ -579,15 +577,15 @@ const Chat: React.FC = () => {
                     <span className="font-mono text-xs text-muted-foreground">
                       {new Date().toLocaleTimeString()}
                     </span>
-                    <span className="font-mono text-xs font-semibold" style={{ color: '#00FF00' }}>
+                    <span className="font-mono text-xs font-semibold text-matrix-green">
                       {"< AI_ASSISTANT"}
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-2 font-mono text-sm" style={{ color: '#00FF00' }}>
+                  <div className="flex items-center gap-2 font-mono text-sm text-matrix-green">
                     <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                    <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse [animation-delay:200ms]" />
+                    <div className="w-2 h-2 bg-destructive rounded-full animate-pulse [animation-delay:400ms]" />
                     <span className="ml-2">Processing request...</span>
                   </div>
                 </div>

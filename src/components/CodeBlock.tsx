@@ -26,8 +26,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
     ...atomDark,
     'pre[class*="language-"]': {
       ...atomDark['pre[class*="language-"]'],
-      background: '#000000',
-      border: '1px solid #00FF00',
+      background: 'hsl(var(--background))',
+      border: '1px solid hsl(var(--matrix-green))',
       borderRadius: '8px',
       padding: '16px',
       margin: 0,
@@ -36,7 +36,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
     },
     'code[class*="language-"]': {
       ...atomDark['code[class*="language-"]'],
-      color: '#00FF00',
+      color: 'hsl(var(--matrix-green))',
       background: 'transparent',
       fontFamily: 'Monaco, Consolas, "Courier New", monospace',
     }
@@ -44,7 +44,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
 
   return (
     <div className="relative my-4">
-      <div className="flex items-center justify-between bg-black border border-primary/30 rounded-t-lg px-4 py-2">
+      <div className="flex items-center justify-between bg-background border border-primary/30 rounded-t-lg px-4 py-2">
         <span className="text-primary font-mono text-sm">{language}</span>
         <Button
           variant="ghost"
@@ -65,7 +65,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
           style={customStyle}
           customStyle={{
             margin: 0,
-            background: '#000000',
+            background: 'hsl(var(--background))',
             borderRadius: '0 0 8px 8px',
             maxHeight: '400px',
             overflow: 'auto'
