@@ -292,8 +292,17 @@ const Chat: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // Build conversation context from recent messages (last 10 messages for context)
+      const recentMessages = messages.slice(-10).map(msg => ({
+        role: msg.isUser ? 'user' : 'assistant',
+        content: msg.content
+      }));
+      
       const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: { message: userMessage.content }
+        body: { 
+          message: userMessage.content,
+          context: recentMessages
+        }
       });
 
       if (error) {
