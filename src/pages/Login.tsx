@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MatrixRain from '@/components/MatrixRain';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +16,7 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [terminalText, setTerminalText] = useState('');
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Check if user is already logged in and handle auth state changes
   useEffect(() => {
@@ -46,6 +48,12 @@ const Login: React.FC = () => {
   ];
 
   useEffect(() => {
+    // Skip typewriter animation on mobile for better performance
+    if (isMobile) {
+      setTerminalText(terminalMessages.join('\n') + '\n');
+      return;
+    }
+
     let messageIndex = 0;
     let charIndex = 0;
     
@@ -55,18 +63,18 @@ const Login: React.FC = () => {
         if (charIndex < currentMessage.length) {
           setTerminalText(prev => prev + currentMessage[charIndex]);
           charIndex++;
-          setTimeout(typeText, 50);
+          setTimeout(typeText, 30); // Faster on desktop
         } else {
           messageIndex++;
           charIndex = 0;
           setTerminalText(prev => prev + '\n');
-          setTimeout(typeText, 500);
+          setTimeout(typeText, 300); // Faster transitions
         }
       }
     };
 
-    setTimeout(typeText, 1000);
-  }, []);
+    setTimeout(typeText, 500); // Start sooner
+  }, [isMobile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,14 +100,14 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
-      <MatrixRain />
+      {!isMobile && <MatrixRain />}
       
-      {/* Scanlines overlay */}
-      <div className="fixed inset-0 pointer-events-none scanlines opacity-20" />
+      {/* Scanlines overlay - reduced on mobile */}
+      {!isMobile && <div className="fixed inset-0 pointer-events-none scanlines opacity-20" />}
       
       <div className="w-full max-w-md animate-fade-in-up">
         {/* Terminal Header */}
-        <div className="mb-6 p-4 terminal-border bg-card/80 backdrop-blur-sm">
+        <div className={`mb-6 p-4 terminal-border ${isMobile ? 'bg-card/95' : 'bg-card/80 backdrop-blur-sm'}`}>
           <div className="flex items-center gap-2 mb-2">
             <Terminal className="w-4 h-4 text-primary" />
             <span className="text-sm text-primary font-mono">SECURE_LOGIN.EXE</span>
@@ -116,7 +124,7 @@ const Login: React.FC = () => {
         </div>
 
         {/* Login Form */}
-        <Card className="terminal-border bg-card/90 backdrop-blur-md shadow-terminal">
+        <Card className={`terminal-border shadow-terminal ${isMobile ? 'bg-card/95' : 'bg-card/90 backdrop-blur-md'}`}>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-mono text-center text-primary glitch" data-text="ACCESS CONTROL">
               ACCESS CONTROL
