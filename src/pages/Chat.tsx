@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,12 +9,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import MatrixRain from '@/components/MatrixRain';
 import TypewriterText from '@/components/TypewriterText';
 import CodeBlock from '@/components/CodeBlock';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { User as UserType, Session } from '@supabase/supabase-js';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Message {
   id: string;
@@ -47,11 +49,12 @@ const Chat: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Function to parse message content and detect code blocks
   const parseMessageContent = (content: string) => {
@@ -364,13 +367,92 @@ const Chat: React.FC = () => {
     );
   }
 
-  return (
-    <div className="h-screen overflow-hidden relative flex">
-      <MatrixRain />
-      
-      {/* Scanlines overlay */}
-      <div className="fixed inset-0 pointer-events-none scanlines opacity-10" />
-      
+  // Mobile Sidebar Component
+  const MobileSidebar = () => (
+    <Drawer open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+      <DrawerContent className="terminal-border bg-card/95 backdrop-blur-md h-[85vh]">
+        <div className="flex flex-col h-full">
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-primary" />
+                <span className="font-mono text-primary text-sm">HISTORY</span>
+              </div>
+              <Button 
+                onClick={() => setIsHistoryOpen(false)}
+                className="h-8 w-8 p-0 bg-transparent border-0 text-primary hover:bg-primary/10"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button 
+              className="w-full btn-matrix font-mono text-xs"
+              onClick={() => {
+                setMessages([]);
+                setCurrentConversationId(null);
+                setIsHistoryOpen(false);
+              }}
+            >
+              + NEW SESSION
+            </Button>
+          </div>
+          
+          {/* Chat History List */}
+          <ScrollArea className="flex-1 p-4 enhanced-scroll">
+            <div className="space-y-2">
+              {conversations.map((conversation) => (
+                <Card 
+                  key={conversation.id} 
+                  className="terminal-border bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
+                  onClick={() => {
+                    loadConversation(conversation.id);
+                    setIsHistoryOpen(false);
+                  }}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-mono text-primary/80 truncate">
+                          {conversation.title}
+                        </div>
+                        <div className="text-xs text-muted-foreground font-mono mt-1">
+                          {new Date(conversation.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0">
+                            <MoreHorizontal className="w-3 h-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="terminal-border bg-card">
+                          <DropdownMenuItem 
+                            className="font-mono text-xs text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteConversation(conversation.id);
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+
+  // Desktop Sidebar Component
+  const DesktopSidebar = () => (
+    <>
       {/* Floating Toggle Button - Middle Left Edge */}
       <div className="fixed left-0 top-1/2 transform -translate-y-1/2 z-50">
         <Button
@@ -466,17 +548,38 @@ const Chat: React.FC = () => {
           </>
         )}
       </div>
+    </>
+  );
+
+  return (
+    <div className="h-screen overflow-hidden relative flex">
+      <MatrixRain />
+      
+      {/* Scanlines overlay */}
+      <div className="fixed inset-0 pointer-events-none scanlines opacity-10" />
+      
+      {/* Conditional Sidebar Rendering */}
+      {isMobile ? <MobileSidebar /> : <DesktopSidebar />}
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-screen">
         {/* Fixed Top Header */}
-        <div className="flex-shrink-0 p-4 terminal-border bg-card/80 backdrop-blur-sm 
+        <div className="flex-shrink-0 p-3 md:p-4 terminal-border bg-card/80 backdrop-blur-sm 
                         flex items-center justify-between border-b border-border">
-          <div className="flex items-center gap-4">
-            <div className="text-primary font-mono font-semibold">
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Mobile Menu Button */}
+            {isMobile && (
+              <Button
+                onClick={() => setIsHistoryOpen(true)}
+                className="bg-transparent border-0 text-primary hover:bg-primary/10 p-2 h-8 w-8"
+              >
+                <Menu className="w-4 h-4" />
+              </Button>
+            )}
+            <div className="text-primary font-mono font-semibold text-sm md:text-base">
               TERMINAL://CHAT
             </div>
-            <div className="flex gap-1">
+            <div className="hidden md:flex gap-1">
               <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
               <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
@@ -520,37 +623,37 @@ const Chat: React.FC = () => {
         <div className="flex-1 overflow-hidden relative">
           <div 
             ref={chatContainerRef}
-            className="h-full overflow-y-auto matrix-chat-container px-6 py-4"
+            className="h-full overflow-y-auto matrix-chat-container px-3 md:px-6 py-4"
             onScroll={handleScroll}
           >
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
               {messages.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="text-primary font-mono text-2xl mb-3 text-glow">
+                <div className="text-center py-12 md:py-16">
+                  <div className="text-primary font-mono text-xl md:text-2xl mb-3 text-glow">
                     SYSTEM_READY
                   </div>
-                    <div className="text-muted-foreground font-mono text-sm">
+                    <div className="text-muted-foreground font-mono text-xs md:text-sm px-4">
                       {"> Initialize query to begin terminal session..."}
                     </div>
                 </div>
               ) : (
                 messages.map((message) => (
-                  <div key={message.id} className={`mb-6 ${message.isUser ? 'text-right' : 'text-left'}`}>
+                  <div key={message.id} className={`mb-4 md:mb-6 ${message.isUser ? 'text-right' : 'text-left'}`}>
                     {/* Terminal Header */}
-                    <div className={`flex items-center gap-2 mb-1 ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                      <span className="font-mono text-xs text-muted-foreground">
+                    <div className={`flex items-center gap-2 mb-1 text-xs md:text-xs ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                      <span className="font-mono text-muted-foreground">
                         [{message.timestamp.toLocaleTimeString()}]
                       </span>
-                      <span className={`font-mono text-xs font-bold ${message.isUser ? 'text-matrix-green-bright' : 'text-matrix-green'}`}>
+                      <span className={`font-mono font-bold ${message.isUser ? 'text-matrix-green-bright' : 'text-matrix-green'}`}>
                         {message.isUser ? 
                           `${profile?.username || user.email?.split('@')[0] || 'USER'}@terminal:~$` : 
-                          'AI_ASSISTANT@system:~$'
+                          'SYSTEM_ASSISTANT@system'
                         }
                       </span>
                     </div>
                     
                     {/* Terminal Message Content */}
-                    <div className={`font-mono text-sm leading-relaxed ${message.isUser ? 'text-right' : 'text-left'}`}>
+                    <div className={`font-mono text-xs md:text-sm leading-relaxed ${message.isUser ? 'text-right' : 'text-left'}`}>
                       {!message.isUser && typingMessageId === message.id ? (
                         <div className="text-matrix-green">
                           <TypewriterText 
@@ -563,12 +666,13 @@ const Chat: React.FC = () => {
                           <React.Fragment key={index}>
                             {part.type === 'text' ? (
                               <div 
-                                className={`whitespace-pre-wrap ${message.isUser ? 'text-matrix-green-bright' : 'text-matrix-green'}`}
+                                className={`whitespace-pre-wrap ${message.isUser ? 'text-matrix-green-bright' : 'text-matrix-green'} 
+                                         ${isMobile ? 'max-w-[90vw] break-words' : ''}`}
                               >
                                 {part.content}
                               </div>
                             ) : (
-                              <div className="my-4">
+                              <div className="my-2 md:my-4 overflow-x-auto">
                                 <CodeBlock language={part.language} code={part.content} />
                               </div>
                             )}
@@ -587,11 +691,11 @@ const Chat: React.FC = () => {
                       {new Date().toLocaleTimeString()}
                     </span>
                     <span className="font-mono text-xs font-semibold text-matrix-green">
-                      {"< AI_ASSISTANT"}
+                      {"SYSTEM_ASSISTANT@system"}
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-2 font-mono text-sm text-matrix-green">
+                  <div className="flex items-center gap-2 font-mono text-xs md:text-sm text-matrix-green">
                     <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                     <div className="w-2 h-2 bg-accent rounded-full animate-pulse [animation-delay:200ms]" />
                     <div className="w-2 h-2 bg-destructive rounded-full animate-pulse [animation-delay:400ms]" />
@@ -606,23 +710,23 @@ const Chat: React.FC = () => {
         </div>
 
         {/* Fixed Bottom Input Area */}
-        <div className="flex-shrink-0 p-4 terminal-border bg-card/90 backdrop-blur-sm border-t border-border">
+        <div className="flex-shrink-0 p-3 md:p-4 terminal-border bg-card/90 backdrop-blur-sm border-t border-border">
           <div className="max-w-4xl mx-auto">
             <div className="flex-1 relative">
               <Textarea
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="> Enter command... (Enter to execute, Shift+Enter for new line)"
+                placeholder={isMobile ? "> Enter command..." : "> Enter command... (Enter to execute, Shift+Enter for new line)"}
                 className="input-terminal font-mono resize-none min-h-[50px] max-h-[120px] 
                          bg-background/50 border-primary/30 text-primary placeholder:text-muted-foreground
-                         pr-12"
-                rows={2}
+                         pr-12 text-sm"
+                rows={isMobile ? 1 : 2}
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className="absolute right-2 bottom-2 btn-matrix px-2 py-1 h-8 w-8 font-mono"
+                className="absolute right-2 bottom-2 btn-matrix px-2 py-1 h-8 w-8 font-mono touch-manipulation"
               >
                 <Send className="w-3 h-3" />
               </Button>
@@ -633,7 +737,7 @@ const Chat: React.FC = () => {
                 STATUS: <span className="text-primary">SECURE_CONNECTION_ACTIVE</span>
               </div>
               <div className="text-muted-foreground">
-                {inputMessage.length}/2000 chars
+                {inputMessage.length}/2000
               </div>
             </div>
           </div>
