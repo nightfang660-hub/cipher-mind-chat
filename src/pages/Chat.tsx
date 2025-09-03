@@ -710,7 +710,7 @@ const Chat: React.FC = () => {
         </div>
 
         {/* Fixed Bottom Input Area */}
-        <div className="flex-shrink-0 p-3 md:p-4 terminal-border bg-card/90 backdrop-blur-sm border-t border-border">
+        <div className="flex-shrink-0 p-2 md:p-4 terminal-border bg-card/90 backdrop-blur-sm border-t border-border">
           <div className="max-w-4xl mx-auto">
             <div className="flex-1 relative">
               <Textarea
@@ -718,17 +718,18 @@ const Chat: React.FC = () => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={isMobile ? "> Enter command..." : "> Enter command... (Enter to execute, Shift+Enter for new line)"}
-                className="input-terminal font-mono resize-none min-h-[50px] max-h-[120px] 
-                         bg-background/50 border-primary/30 text-primary placeholder:text-muted-foreground
-                         pr-12 text-sm"
+                className={`input-terminal font-mono resize-none 
+                         ${isMobile ? 'min-h-[40px] max-h-[80px] text-xs pr-10' : 'min-h-[50px] max-h-[120px] text-sm pr-12'}
+                         bg-background/50 border-primary/30 text-primary placeholder:text-muted-foreground`}
                 rows={isMobile ? 1 : 2}
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className="absolute right-2 bottom-2 btn-matrix px-2 py-1 h-8 w-8 font-mono touch-manipulation"
+                className={`absolute right-1 md:right-2 bottom-1 md:bottom-2 btn-matrix font-mono touch-manipulation
+                          ${isMobile ? 'px-1.5 py-1 h-6 w-6' : 'px-2 py-1 h-8 w-8'}`}
               >
-                <Send className="w-3 h-3" />
+                <Send className={isMobile ? "w-2.5 h-2.5" : "w-3 h-3"} />
               </Button>
             </div>
             

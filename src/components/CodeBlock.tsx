@@ -29,9 +29,9 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
       background: 'hsl(var(--background))',
       border: '1px solid hsl(var(--matrix-green))',
       borderRadius: '8px',
-      padding: '16px',
+      padding: window.innerWidth < 768 ? '12px' : '16px',
       margin: 0,
-      fontSize: '14px',
+      fontSize: window.innerWidth < 768 ? '12px' : '14px',
       fontFamily: 'Monaco, Consolas, "Courier New", monospace',
     },
     'code[class*="language-"]': {
@@ -43,19 +43,19 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
   };
 
   return (
-    <div className="relative my-4">
-      <div className="flex items-center justify-between bg-background border border-primary/30 rounded-t-lg px-4 py-2">
-        <span className="text-primary font-mono text-sm">{language}</span>
+    <div className="relative my-2 md:my-4">
+      <div className="flex items-center justify-between bg-background border border-primary/30 rounded-t-lg px-2 md:px-4 py-1.5 md:py-2">
+        <span className="text-primary font-mono text-xs md:text-sm">{language}</span>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleCopy}
-          className="h-6 w-6 p-0 hover:bg-primary/20"
+          className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-primary/20 touch-manipulation"
         >
           {copied ? (
-            <Check className="w-3 h-3 text-hacker" />
+            <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-hacker" />
           ) : (
-            <Copy className="w-3 h-3 text-primary" />
+            <Copy className="w-2.5 h-2.5 md:w-3 md:h-3 text-primary" />
           )}
         </Button>
       </div>
@@ -67,7 +67,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
             margin: 0,
             background: 'hsl(var(--background))',
             borderRadius: '0 0 8px 8px',
-            maxHeight: '400px',
+            maxHeight: window.innerWidth < 768 ? '250px' : '400px',
             overflow: 'auto'
           }}
           wrapLines={true}
