@@ -156,8 +156,7 @@ const Profile: React.FC = () => {
         .upsert({
           user_id: user.id,
           ...updateData,
-        })
-        .eq('user_id', user.id);
+        });
 
       if (error) throw error;
 
