@@ -72,27 +72,36 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_response_color: string | null
           avatar_url: string | null
+          background_color: string | null
           created_at: string
           id: string
           updated_at: string
           user_id: string
+          user_input_color: string | null
           username: string | null
         }
         Insert: {
+          ai_response_color?: string | null
           avatar_url?: string | null
+          background_color?: string | null
           created_at?: string
           id?: string
           updated_at?: string
           user_id: string
+          user_input_color?: string | null
           username?: string | null
         }
         Update: {
+          ai_response_color?: string | null
           avatar_url?: string | null
+          background_color?: string | null
           created_at?: string
           id?: string
           updated_at?: string
           user_id?: string
+          user_input_color?: string | null
           username?: string | null
         }
         Relationships: []

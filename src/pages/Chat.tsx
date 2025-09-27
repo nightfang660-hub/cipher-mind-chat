@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2, Menu, X } from 'lucide-react';
+import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2, Menu, X, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { User as UserType, Session } from '@supabase/supabase-js';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useProfile } from '@/hooks/useProfile';
 
 interface Message {
   id: string;
@@ -35,14 +36,17 @@ interface Conversation {
 interface Profile {
   id: string;
   user_id: string;
-  username: string;
+  username: string | null;
   avatar_url: string | null;
+  background_color: string;
+  user_input_color: string;
+  ai_response_color: string;
 }
 
 const Chat: React.FC = () => {
   const [user, setUser] = useState<UserType | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const { profile } = useProfile(user);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -103,9 +107,8 @@ const Chat: React.FC = () => {
         if (!session) {
           navigate('/login');
         } else {
-          // Fetch user profile when session is available
+          // Profile and conversations will be loaded automatically by hooks
           setTimeout(() => {
-            fetchUserProfile(session.user.id);
             loadConversations();
           }, 0);
         }
@@ -120,32 +123,12 @@ const Chat: React.FC = () => {
       if (!session) {
         navigate('/login');
       } else {
-        fetchUserProfile(session.user.id);
         loadConversations();
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
-      
-      setProfile(data);
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
 
   const loadConversations = async () => {
     try {

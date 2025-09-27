@@ -1,6 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 
-const MatrixRain: React.FC = () => {
+interface MatrixRainProps {
+  backgroundColor?: string;
+}
+
+const MatrixRain: React.FC<MatrixRainProps> = ({ backgroundColor = '#003300' }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -74,11 +78,24 @@ const MatrixRain: React.FC = () => {
     };
   }, []);
 
+  // Convert hex to RGB and create gradient
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 51, b: 0 };
+  };
+
+  const rgb = hexToRgb(backgroundColor);
+  const gradient = `linear-gradient(180deg, #000000, rgb(${Math.floor(rgb.r * 0.3)}, ${Math.floor(rgb.g * 0.3)}, ${Math.floor(rgb.b * 0.3)}))`;
+
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 w-full h-full pointer-events-none z-[-1]"
-      style={{ background: 'linear-gradient(180deg, #000000, #001100)' }}
+      style={{ background: gradient }}
     />
   );
 };
