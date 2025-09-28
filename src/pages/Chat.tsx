@@ -585,7 +585,7 @@ const Chat: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="terminal-border bg-card">
-              <DropdownMenuItem className="font-mono">
+              <DropdownMenuItem className="font-mono" onClick={() => navigate('/profile')}>
                 <Edit3 className="w-4 h-4 mr-2" />
                 Edit Profile
               </DropdownMenuItem>
