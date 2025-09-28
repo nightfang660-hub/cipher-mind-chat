@@ -536,7 +536,7 @@ const Chat: React.FC = () => {
 
   return (
     <div className="h-screen overflow-hidden relative flex">
-      <MatrixRain />
+      <MatrixRain backgroundColor={profile?.background_color || '#003300'} />
       
       {/* Scanlines overlay */}
       <div className="fixed inset-0 pointer-events-none scanlines opacity-10" />
