@@ -140,13 +140,36 @@ All colors MUST be HSL.
   
   /* Hacker Terminal Effects */
   .terminal-border {
-    border: 1px solid hsl(var(--matrix-green));
-    box-shadow: 0 0 10px hsl(var(--matrix-green) / 0.3);
+    border: 1px solid var(--dynamic-matrix-color, hsl(var(--matrix-green)));
+    box-shadow: 0 0 10px var(--dynamic-border-color, hsl(var(--matrix-green) / 0.3));
   }
   
   .terminal-glow {
     box-shadow: var(--shadow-glow);
-    border: 1px solid hsl(var(--matrix-green) / 0.5);
+    border: 1px solid var(--dynamic-border-color, hsl(var(--matrix-green) / 0.5));
+  }
+
+  /* Dynamic matrix-themed classes for profile customization */
+  [style*="--dynamic-matrix-color"] .terminal-border {
+    border-color: var(--dynamic-matrix-color);
+    box-shadow: 0 0 10px var(--dynamic-border-color);
+  }
+
+  [style*="--dynamic-matrix-color"] .terminal-glow {
+    border-color: var(--dynamic-border-color);
+  }
+
+  [style*="--dynamic-matrix-color"] .btn-matrix {
+    border-color: var(--dynamic-matrix-color);
+  }
+
+  [style*="--dynamic-matrix-color"] .input-terminal {
+    border-color: var(--dynamic-matrix-color);
+  }
+
+  [style*="--dynamic-matrix-color"] .input-terminal:focus {
+    border-color: var(--dynamic-matrix-color);
+    box-shadow: 0 0 0 2px var(--dynamic-border-color);
   }
   
   .text-glow {

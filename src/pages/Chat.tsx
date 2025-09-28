@@ -535,8 +535,15 @@ const Chat: React.FC = () => {
   );
 
   return (
-    <div className="h-screen overflow-hidden relative flex">
-      <MatrixRain backgroundColor={profile?.background_color || '#003300'} />
+    <div className="h-screen overflow-hidden relative flex" 
+         style={{
+           '--dynamic-matrix-color': profile?.background_color || '#00ff00',
+           '--dynamic-border-color': profile?.background_color ? `${profile.background_color}66` : '#00ff0066'
+         } as React.CSSProperties}>
+      <MatrixRain 
+        backgroundColor={profile?.background_color || '#003300'} 
+        matrixColor={profile?.background_color || '#00ff00'}
+      />
       
       {/* Scanlines overlay */}
       <div className="fixed inset-0 pointer-events-none scanlines opacity-10" />

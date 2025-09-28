@@ -29,10 +29,14 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
       background: 'hsl(var(--background))',
       border: '1px solid hsl(var(--matrix-green))',
       borderRadius: '8px',
-      padding: window.innerWidth < 768 ? '12px' : '16px',
+      padding: '12px',
       margin: 0,
-      fontSize: window.innerWidth < 768 ? '12px' : '14px',
+      fontSize: '12px',
       fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+      '@media (min-width: 768px)': {
+        padding: '16px',
+        fontSize: '14px',
+      }
     },
     'code[class*="language-"]': {
       ...atomDark['code[class*="language-"]'],
@@ -60,21 +64,22 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
         </Button>
       </div>
       <div className="rounded-b-lg overflow-hidden border border-t-0 border-primary/30">
-        <SyntaxHighlighter
-          language={language}
-          style={customStyle}
-          customStyle={{
-            margin: 0,
-            background: 'hsl(var(--background))',
-            borderRadius: '0 0 8px 8px',
-            maxHeight: window.innerWidth < 768 ? '250px' : '400px',
-            overflow: 'auto'
-          }}
-          wrapLines={true}
-          wrapLongLines={true}
-        >
-          {code}
-        </SyntaxHighlighter>
+        <div className="max-h-[250px] md:max-h-[400px] overflow-auto">
+          <SyntaxHighlighter
+            language={language}
+            style={customStyle}
+            customStyle={{
+              margin: 0,
+              background: 'hsl(var(--background))',
+              borderRadius: '0 0 8px 8px',
+              overflow: 'visible'
+            }}
+            wrapLines={true}
+            wrapLongLines={true}
+          >
+            {code}
+          </SyntaxHighlighter>
+        </div>
       </div>
     </div>
   );

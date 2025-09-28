@@ -2,9 +2,10 @@ import React, { useEffect, useRef } from 'react';
 
 interface MatrixRainProps {
   backgroundColor?: string;
+  matrixColor?: string;
 }
 
-const MatrixRain: React.FC<MatrixRainProps> = ({ backgroundColor = '#003300' }) => {
+const MatrixRain: React.FC<MatrixRainProps> = ({ backgroundColor = '#003300', matrixColor = '#00ff00' }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -36,12 +37,23 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ backgroundColor = '#003300' }) 
       drops[i] = Math.random() * canvas.height;
     }
 
+    // Convert matrixColor to RGB for variations
+    const hexToRgbForMatrix = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 0, g: 255, b: 0 };
+    };
+
+    const matrixRgb = hexToRgbForMatrix(matrixColor);
+    
     const draw = () => {
       // Semi-transparent black to create trail effect
       ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = '#00ff00';
       ctx.font = `${fontSize}px monospace`;
 
       for (let i = 0; i < drops.length; i++) {
@@ -49,14 +61,16 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ backgroundColor = '#003300' }) 
         const x = i * fontSize;
         const y = drops[i] * fontSize;
 
-        // Add some brightness variation
+        // Add some brightness variation using the matrix color
         const brightness = Math.random();
         if (brightness > 0.95) {
           ctx.fillStyle = '#ffffff'; // Bright white for highlights
         } else if (brightness > 0.8) {
-          ctx.fillStyle = '#66ff66'; // Bright green
+          // Bright version of matrix color
+          ctx.fillStyle = `rgb(${Math.min(255, matrixRgb.r + 40)}, ${Math.min(255, matrixRgb.g + 40)}, ${Math.min(255, matrixRgb.b + 40)})`;
         } else {
-          ctx.fillStyle = '#00aa00'; // Dim green
+          // Dim version of matrix color
+          ctx.fillStyle = `rgb(${Math.floor(matrixRgb.r * 0.7)}, ${Math.floor(matrixRgb.g * 0.7)}, ${Math.floor(matrixRgb.b * 0.7)})`;
         }
 
         ctx.fillText(text, x, y);
@@ -76,7 +90,7 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ backgroundColor = '#003300' }) 
       clearInterval(interval);
       window.removeEventListener('resize', resizeCanvas);
     };
-  }, []);
+  }, [matrixColor]);
 
   // Convert hex to RGB and create gradient
   const hexToRgb = (hex: string) => {
