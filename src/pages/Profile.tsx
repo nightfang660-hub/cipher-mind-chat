@@ -156,6 +156,8 @@ const Profile: React.FC = () => {
         .upsert({
           user_id: user.id,
           ...updateData,
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;
