@@ -627,7 +627,14 @@ const Chat: React.FC = () => {
                       <span className="font-mono text-muted-foreground">
                         [{message.timestamp.toLocaleTimeString()}]
                       </span>
-                      <span className={`font-mono font-bold ${message.isUser ? 'text-matrix-green-bright' : 'text-matrix-green'}`}>
+                      <span 
+                        className="font-mono font-bold"
+                        style={{ 
+                          color: message.isUser 
+                            ? profile?.user_input_color || '#00ff00' 
+                            : profile?.ai_response_color || '#66ff66' 
+                        }}
+                      >
                         {message.isUser ? 
                           `${profile?.username || user.email?.split('@')[0] || 'USER'}@terminal:~$` : 
                           'SYSTEM_ASSISTANT@system'
@@ -638,7 +645,7 @@ const Chat: React.FC = () => {
                     {/* Terminal Message Content */}
                     <div className={`font-mono text-xs md:text-sm leading-relaxed ${message.isUser ? 'text-right' : 'text-left'}`}>
                       {!message.isUser && typingMessageId === message.id ? (
-                        <div className="text-matrix-green">
+                        <div style={{ color: profile?.ai_response_color || '#66ff66' }}>
                           <TypewriterText 
                             text={message.content} 
                             onComplete={() => setTypingMessageId(null)}
@@ -649,8 +656,12 @@ const Chat: React.FC = () => {
                           <React.Fragment key={index}>
                             {part.type === 'text' ? (
                               <div 
-                                className={`whitespace-pre-wrap ${message.isUser ? 'text-matrix-green-bright' : 'text-matrix-green'} 
-                                         ${isMobile ? 'max-w-[90vw] break-words' : ''}`}
+                                className={`whitespace-pre-wrap ${isMobile ? 'max-w-[90vw] break-words' : ''}`}
+                                style={{ 
+                                  color: message.isUser 
+                                    ? profile?.user_input_color || '#00ff00' 
+                                    : profile?.ai_response_color || '#66ff66' 
+                                }}
                               >
                                 {part.content}
                               </div>
@@ -673,12 +684,18 @@ const Chat: React.FC = () => {
                     <span className="font-mono text-xs text-muted-foreground">
                       {new Date().toLocaleTimeString()}
                     </span>
-                    <span className="font-mono text-xs font-semibold text-matrix-green">
+                    <span 
+                      className="font-mono text-xs font-semibold"
+                      style={{ color: profile?.ai_response_color || '#66ff66' }}
+                    >
                       {"SYSTEM_ASSISTANT@system"}
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-2 font-mono text-xs md:text-sm text-matrix-green">
+                  <div 
+                    className="flex items-center gap-2 font-mono text-xs md:text-sm"
+                    style={{ color: profile?.ai_response_color || '#66ff66' }}
+                  >
                     <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                     <div className="w-2 h-2 bg-accent rounded-full animate-pulse [animation-delay:200ms]" />
                     <div className="w-2 h-2 bg-destructive rounded-full animate-pulse [animation-delay:400ms]" />
