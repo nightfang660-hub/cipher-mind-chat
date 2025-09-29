@@ -48,18 +48,18 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
 
   return (
     <div className="relative my-2 md:my-4">
-      <div className="flex items-center justify-between bg-background border border-primary/30 rounded-t-lg px-2 md:px-4 py-1.5 md:py-2">
-        <span className="text-primary font-mono text-xs md:text-sm">{language}</span>
+      <div className="flex items-center justify-between bg-background border border-primary/30 rounded-t-lg px-2 md:px-4 py-1.5 md:py-2 gap-2">
+        <span className="text-primary font-mono text-xs md:text-sm truncate flex-1 min-w-0">{language}</span>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleCopy}
-          className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-primary/20 touch-manipulation"
+          className="h-6 w-6 md:h-8 md:w-8 p-0 hover:bg-primary/20 touch-manipulation flex-shrink-0"
         >
           {copied ? (
-            <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-hacker" />
+            <Check className="w-3 h-3 md:w-4 md:h-4 text-hacker" />
           ) : (
-            <Copy className="w-2.5 h-2.5 md:w-3 md:h-3 text-primary" />
+            <Copy className="w-3 h-3 md:w-4 md:h-4 text-primary" />
           )}
         </Button>
       </div>

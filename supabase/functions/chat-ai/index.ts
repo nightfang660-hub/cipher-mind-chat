@@ -87,10 +87,10 @@ Remember: Generate working, production-ready code while maintaining natural conv
           }]
         },
         generationConfig: {
-          temperature: 0.3,
-          topK: 20,
-          topP: 0.8,
-          maxOutputTokens: 1024,
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 512,
         },
       }),
     });
