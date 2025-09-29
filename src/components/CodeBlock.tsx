@@ -64,8 +64,14 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
         </Button>
       </div>
       <div className="rounded-b-lg overflow-hidden border border-t-0 border-primary/30">
-        <div className="max-h-[250px] md:max-h-[400px] overflow-auto">
-          <div className="overflow-x-auto min-w-0">
+        <div 
+          className="max-h-[250px] md:max-h-[400px] overflow-auto scrollbar-hidden"
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'hsl(var(--background)) hsl(var(--background))'
+          }}
+        >
+          <div className="overflow-x-auto overflow-y-auto min-w-0 scrollbar-hidden">
             <SyntaxHighlighter
               language={language}
               style={customStyle}
