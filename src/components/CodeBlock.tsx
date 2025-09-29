@@ -65,20 +65,25 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
       </div>
       <div className="rounded-b-lg overflow-hidden border border-t-0 border-primary/30">
         <div className="max-h-[250px] md:max-h-[400px] overflow-auto">
-          <SyntaxHighlighter
-            language={language}
-            style={customStyle}
-            customStyle={{
-              margin: 0,
-              background: 'hsl(var(--background))',
-              borderRadius: '0 0 8px 8px',
-              overflow: 'visible'
-            }}
-            wrapLines={true}
-            wrapLongLines={true}
-          >
-            {code}
-          </SyntaxHighlighter>
+          <div className="overflow-x-auto min-w-0">
+            <SyntaxHighlighter
+              language={language}
+              style={customStyle}
+              customStyle={{
+                margin: 0,
+                background: 'hsl(var(--background))',
+                borderRadius: '0 0 8px 8px',
+                overflow: 'visible',
+                minWidth: 'max-content',
+                whiteSpace: 'pre'
+              }}
+              wrapLines={false}
+              wrapLongLines={false}
+              PreTag="div"
+            >
+              {code}
+            </SyntaxHighlighter>
+          </div>
         </div>
       </div>
     </div>
