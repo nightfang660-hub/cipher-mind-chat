@@ -65,31 +65,33 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
       </div>
       <div className="rounded-b-lg overflow-hidden border border-t-0 border-primary/30">
         <div 
-          className="max-h-[250px] md:max-h-[400px] overflow-auto scrollbar-hidden"
+          className="max-h-[250px] md:max-h-[400px] overflow-x-auto overflow-y-auto scrollbar-hidden"
           style={{
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'hsl(var(--background)) hsl(var(--background))'
+            scrollbarWidth: 'none',
+            scrollbarColor: 'transparent transparent',
+            overflowX: 'auto',
+            overflowY: 'auto'
           }}
         >
-          <div className="overflow-x-auto overflow-y-auto min-w-0 scrollbar-hidden">
-            <SyntaxHighlighter
-              language={language}
-              style={customStyle}
-              customStyle={{
-                margin: 0,
-                background: 'hsl(var(--background))',
-                borderRadius: '0 0 8px 8px',
-                overflow: 'visible',
-                minWidth: 'max-content',
-                whiteSpace: 'pre'
-              }}
-              wrapLines={false}
-              wrapLongLines={false}
-              PreTag="div"
-            >
-              {code}
-            </SyntaxHighlighter>
-          </div>
+          <SyntaxHighlighter
+            language={language}
+            style={customStyle}
+            customStyle={{
+              margin: 0,
+              background: 'hsl(var(--background))',
+              borderRadius: '0 0 8px 8px',
+              padding: '12px',
+              minWidth: 'max-content',
+              whiteSpace: 'pre',
+              overflowX: 'visible',
+              fontSize: '12px'
+            }}
+            wrapLines={false}
+            wrapLongLines={false}
+            PreTag="div"
+          >
+            {code}
+          </SyntaxHighlighter>
         </div>
       </div>
     </div>

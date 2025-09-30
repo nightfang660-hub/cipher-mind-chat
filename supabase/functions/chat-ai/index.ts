@@ -67,6 +67,19 @@ CORE RULES:
 7. Apply DRY and KISS principles
 8. Provide working examples with usage snippets
 
+CODE QUALITY ENFORCEMENT (CRITICAL):
+- Validate ALL syntax before responding
+- Ensure proper import statements
+- Check for undefined variables
+- Verify type correctness (especially TypeScript)
+- Validate bracket/parenthesis matching
+- Check semicolons and commas
+- Ensure proper JSX syntax
+- Verify all function signatures
+- Test logic flow mentally
+- Confirm no deprecated APIs
+- Check for common errors (off-by-one, null refs, etc.)
+
 COMMUNICATION:
 - Always start responses with "SYSTEM_ASSISTANT@system "
 - Be concise but complete
@@ -83,7 +96,7 @@ OUTPUT STYLE:
 - Brief explanations after code
 - Clear next steps when relevant
 
-Remember: Generate working, production-ready code while maintaining natural conversation flow.`
+Remember: Generate working, production-ready, SYNTAX-VALIDATED code while maintaining natural conversation flow.`
           }]
         },
         generationConfig: {
