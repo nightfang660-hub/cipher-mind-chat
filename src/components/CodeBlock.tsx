@@ -47,7 +47,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
   };
 
   return (
-    <div className="relative my-2 md:my-4">
+    <div className="relative my-2 md:my-4 w-full max-w-full overflow-hidden">
       <div className="flex items-center justify-between bg-background border border-primary/30 rounded-t-lg px-2 md:px-4 py-1.5 md:py-2 gap-2">
         <span className="text-primary font-mono text-xs md:text-sm truncate flex-1 min-w-0">{language}</span>
         <Button
@@ -63,14 +63,12 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
           )}
         </Button>
       </div>
-      <div className="rounded-b-lg overflow-hidden border border-t-0 border-primary/30">
+      <div className="rounded-b-lg border border-t-0 border-primary/30 overflow-hidden w-full">
         <div 
-          className="max-h-[250px] md:max-h-[400px] overflow-x-auto overflow-y-auto scrollbar-hidden"
+          className="max-h-[250px] md:max-h-[400px] overflow-x-auto overflow-y-auto scrollbar-hidden w-full"
           style={{
             scrollbarWidth: 'none',
-            scrollbarColor: 'transparent transparent',
-            overflowX: 'auto',
-            overflowY: 'auto'
+            scrollbarColor: 'transparent transparent'
           }}
         >
           <SyntaxHighlighter
@@ -81,10 +79,12 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
               background: 'hsl(var(--background))',
               borderRadius: '0 0 8px 8px',
               padding: '12px',
-              minWidth: 'max-content',
+              minWidth: 'fit-content',
+              maxWidth: 'none',
               whiteSpace: 'pre',
-              overflowX: 'visible',
-              fontSize: '12px'
+              overflow: 'visible',
+              fontSize: '12px',
+              display: 'inline-block'
             }}
             wrapLines={false}
             wrapLongLines={false}
