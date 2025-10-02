@@ -724,7 +724,7 @@ const Chat: React.FC = () => {
         </div>
 
         {/* Fixed Bottom Input Area */}
-        <div className="flex-shrink-0 p-2 md:p-4 terminal-border bg-card/90 backdrop-blur-sm border-t border-border">
+        <div className="flex-shrink-0 p-2 md:p-4 terminal-border bg-card/90 backdrop-blur-sm">
           <div className="max-w-4xl mx-auto">
             <div className="flex-1 relative">
               <Textarea
@@ -732,9 +732,9 @@ const Chat: React.FC = () => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={isMobile ? "> Enter command..." : "> Enter command... (Enter to execute, Shift+Enter for new line)"}
-                className={`input-terminal font-mono resize-none 
+                className={`input-terminal font-mono resize-none border-0
                          ${isMobile ? 'min-h-[40px] max-h-[80px] text-xs pr-10' : 'min-h-[50px] max-h-[120px] text-sm pr-12'}
-                         bg-background/50 border-primary/30 text-primary placeholder:text-muted-foreground`}
+                         bg-background/50 text-primary placeholder:text-muted-foreground`}
                 rows={isMobile ? 1 : 2}
               />
               <Button
@@ -779,21 +779,33 @@ const Chat: React.FC = () => {
                   type="color"
                   value={profile?.matrix_color || '#00ff00'}
                   onChange={(e) => updateProfile({ matrix_color: e.target.value })}
-                  className="w-20 h-10 cursor-pointer border-primary/30"
+                  className="w-20 h-10 cursor-pointer"
                 />
                 <Input
                   type="text"
-                  value={profile?.matrix_color || '#00ff00'}
+                  value={profile?.matrix_color?.toUpperCase() || '#00FF00'}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^#[0-9A-F]{6}$/i.test(value)) {
-                      updateProfile({ matrix_color: value });
+                    const value = e.target.value.toUpperCase();
+                    if (/^#[0-9A-F]{0,6}$/i.test(value)) {
+                      if (value.length === 7) {
+                        updateProfile({ matrix_color: value });
+                      }
                     }
                   }}
-                  className="font-mono text-sm flex-1 bg-background/50 border-primary/30"
-                  placeholder="#00ff00"
+                  onBlur={(e) => {
+                    const value = e.target.value;
+                    if (!/^#[0-9A-F]{6}$/i.test(value)) {
+                      updateProfile({ matrix_color: profile?.matrix_color || '#00ff00' });
+                    }
+                  }}
+                  className="font-mono text-sm flex-1 bg-background/50"
+                  placeholder="#00FF00"
+                  maxLength={7}
                 />
               </div>
+              <p className="text-xs text-muted-foreground font-mono">
+                Type any hex color code (e.g., #FF5733) or use the color picker
+              </p>
               <p className="text-xs text-muted-foreground font-mono">
                 Choose any color for the falling matrix characters
               </p>
