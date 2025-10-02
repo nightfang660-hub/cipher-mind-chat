@@ -65,7 +65,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
       </div>
       <div className="rounded-b-lg border border-t-0 border-primary/30 overflow-hidden w-full">
         <div 
-          className="max-h-[250px] md:max-h-[400px] overflow-x-auto overflow-y-auto scrollbar-hidden w-full"
+          className="max-h-[200px] sm:max-h-[250px] md:max-h-[350px] lg:max-h-[400px] overflow-x-auto overflow-y-auto scrollbar-hidden w-full"
           style={{
             scrollbarWidth: 'none',
             scrollbarColor: 'transparent transparent'
@@ -78,12 +78,12 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
               margin: 0,
               background: 'hsl(var(--background))',
               borderRadius: '0 0 8px 8px',
-              padding: '12px',
+              padding: '8px',
               minWidth: 'fit-content',
               maxWidth: 'none',
               whiteSpace: 'pre',
               overflow: 'visible',
-              fontSize: '12px',
+              fontSize: '11px',
               display: 'inline-block'
             }}
             wrapLines={false}

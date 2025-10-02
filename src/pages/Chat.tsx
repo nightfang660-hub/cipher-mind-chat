@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2, Menu, X, Settings } from 'lucide-react';
+import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2, Menu, X, Settings, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +10,8 @@ import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import MatrixRain from '@/components/MatrixRain';
 import TypewriterText from '@/components/TypewriterText';
 import CodeBlock from '@/components/CodeBlock';
@@ -46,7 +48,7 @@ interface Profile {
 const Chat: React.FC = () => {
   const [user, setUser] = useState<UserType | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const { profile } = useProfile(user);
+  const { profile, updateProfile } = useProfile(user);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +56,7 @@ const Chat: React.FC = () => {
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -537,12 +540,12 @@ const Chat: React.FC = () => {
   return (
     <div className="h-screen overflow-hidden relative flex" 
          style={{
-           '--dynamic-matrix-color': profile?.background_color || '#00ff00',
-           '--dynamic-border-color': profile?.background_color ? `${profile.background_color}66` : '#00ff0066'
+           '--dynamic-matrix-color': profile?.matrix_color || '#00ff00',
+           '--dynamic-border-color': profile?.matrix_color ? `${profile.matrix_color}66` : '#00ff0066'
          } as React.CSSProperties}>
       <MatrixRain 
         backgroundColor={profile?.background_color || '#003300'} 
-        matrixColor={profile?.background_color || '#00ff00'}
+        matrixColor={profile?.matrix_color || '#00ff00'}
       />
       
       {/* Scanlines overlay */}
@@ -595,6 +598,10 @@ const Chat: React.FC = () => {
               <DropdownMenuItem className="font-mono" onClick={() => navigate('/profile')}>
                 <Edit3 className="w-4 h-4 mr-2" />
                 Edit Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem className="font-mono" onClick={() => setIsSettingsOpen(true)}>
+                <Palette className="w-4 h-4 mr-2" />
+                Matrix Color
               </DropdownMenuItem>
               <DropdownMenuItem className="font-mono">
                 <Upload className="w-4 h-4 mr-2" />
@@ -751,6 +758,86 @@ const Chat: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Settings Dialog for Matrix Color Customization */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="terminal-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-primary">Matrix Animation Settings</DialogTitle>
+            <DialogDescription className="font-mono text-sm">
+              Customize the color of your matrix rain animation
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="matrix-color" className="font-mono text-sm">
+                Matrix Color
+              </Label>
+              <div className="flex gap-3 items-center">
+                <Input
+                  id="matrix-color"
+                  type="color"
+                  value={profile?.matrix_color || '#00ff00'}
+                  onChange={(e) => updateProfile({ matrix_color: e.target.value })}
+                  className="w-20 h-10 cursor-pointer border-primary/30"
+                />
+                <Input
+                  type="text"
+                  value={profile?.matrix_color || '#00ff00'}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^#[0-9A-F]{6}$/i.test(value)) {
+                      updateProfile({ matrix_color: value });
+                    }
+                  }}
+                  className="font-mono text-sm flex-1 bg-background/50 border-primary/30"
+                  placeholder="#00ff00"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground font-mono">
+                Choose any color for the falling matrix characters
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="font-mono text-sm">Quick Presets</Label>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="font-mono text-xs"
+                  onClick={() => updateProfile({ matrix_color: '#00ff00' })}
+                >
+                  Classic Green
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="font-mono text-xs"
+                  onClick={() => updateProfile({ matrix_color: '#00ffff' })}
+                >
+                  Cyan
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="font-mono text-xs"
+                  onClick={() => updateProfile({ matrix_color: '#ff00ff' })}
+                >
+                  Magenta
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="font-mono text-xs"
+                  onClick={() => updateProfile({ matrix_color: '#ffff00' })}
+                >
+                  Yellow
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

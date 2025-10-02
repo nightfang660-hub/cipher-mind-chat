@@ -10,6 +10,7 @@ export interface ProfileData {
   background_color: string;
   user_input_color: string;
   ai_response_color: string;
+  matrix_color: string;
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +46,7 @@ export const useProfile = (user: User | null) => {
           background_color: '#003300',
           user_input_color: '#00ff00',
           ai_response_color: '#66ff66',
+          matrix_color: '#00ff00',
         };
 
         const { data: newProfile, error: createError } = await supabase
