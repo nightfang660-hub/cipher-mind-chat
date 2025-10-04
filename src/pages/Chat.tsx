@@ -396,7 +396,7 @@ const Chat: React.FC = () => {
               {conversations.map((conversation) => (
                 <Card 
                   key={conversation.id} 
-                  className="terminal-border bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
+                  className="bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
                   onClick={() => {
                     loadConversation(conversation.id);
                     setIsHistoryOpen(false);
@@ -418,7 +418,7 @@ const Chat: React.FC = () => {
                             <MoreHorizontal className="w-3 h-3" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="terminal-border bg-card">
+                        <DropdownMenuContent align="end" className="bg-card">
                           <DropdownMenuItem 
                             className="font-mono text-xs text-destructive"
                             onClick={(e) => {
@@ -449,7 +449,7 @@ const Chat: React.FC = () => {
       <div className="fixed left-0 top-1/2 transform -translate-y-1/2 z-50">
         <Button
           onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-          className="bg-background/90 border terminal-border text-primary hover:bg-primary/10 
+          className="bg-background/90 text-primary hover:bg-primary/10 
                      rounded-none rounded-r-lg px-2 py-4 font-mono text-xs
                      shadow-lg backdrop-blur-sm transition-all duration-300"
           style={{ writingMode: 'horizontal-tb' }}
@@ -460,11 +460,11 @@ const Chat: React.FC = () => {
       
       {/* Left Sidebar - Chat History */}
       <div className={`${isHistoryOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden
-                      terminal-border bg-card/90 backdrop-blur-md flex flex-col`}>
+                      bg-card/50 backdrop-blur-md flex flex-col`}>
         {isHistoryOpen && (
           <>
             {/* Sidebar Header */}
-            <div className="p-4 border-b border-border">
+            <div className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <History className="w-4 h-4 text-primary" />
                 <span className="font-mono text-primary text-sm">HISTORY</span>
@@ -486,7 +486,7 @@ const Chat: React.FC = () => {
                  {conversations.map((conversation) => (
                    <Card 
                      key={conversation.id} 
-                     className="terminal-border bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
+                     className="bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
                      onClick={() => loadConversation(conversation.id)}
                    >
                      <CardContent className="p-3">
@@ -502,7 +502,7 @@ const Chat: React.FC = () => {
                                  </div>
                                </TooltipTrigger>
                                {conversation.title.length > 30 && (
-                                 <TooltipContent className="terminal-border bg-card font-mono text-xs max-w-xs">
+                                 <TooltipContent className="bg-card font-mono text-xs max-w-xs">
                                    <p>{conversation.title}</p>
                                  </TooltipContent>
                                )}
@@ -518,7 +518,7 @@ const Chat: React.FC = () => {
                               <MoreHorizontal className="w-3 h-3" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="terminal-border bg-card">
+                           <DropdownMenuContent align="end" className="bg-card">
                             <DropdownMenuItem 
                               className="font-mono text-xs text-destructive"
                               onClick={(e) => {
@@ -563,8 +563,8 @@ const Chat: React.FC = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-screen">
         {/* Fixed Top Header */}
-        <div className="flex-shrink-0 p-3 md:p-4 terminal-border bg-card/80 backdrop-blur-sm 
-                        flex items-center justify-between border-b border-border">
+        <div className="flex-shrink-0 p-3 md:p-4 bg-card/50 backdrop-blur-sm 
+                        flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-4">
             {/* Mobile Menu Button */}
             {isMobile && (
@@ -600,7 +600,7 @@ const Chat: React.FC = () => {
                 </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="terminal-border bg-card">
+            <DropdownMenuContent align="end" className="bg-card">
               <DropdownMenuItem className="font-mono" onClick={() => navigate('/profile')}>
                 <Edit3 className="w-4 h-4 mr-2" />
                 Edit Profile
@@ -730,7 +730,7 @@ const Chat: React.FC = () => {
         </div>
 
         {/* Fixed Bottom Input Area */}
-        <div className="flex-shrink-0 p-2 md:p-4 terminal-border bg-card/90 backdrop-blur-sm">
+        <div className="flex-shrink-0 p-2 md:p-4 bg-card/50 backdrop-blur-sm">
           <div className="max-w-4xl mx-auto">
             <div className="flex-1 relative">
               <Textarea
@@ -738,9 +738,9 @@ const Chat: React.FC = () => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={isMobile ? "> Enter command..." : "> Enter command... (Enter to execute, Shift+Enter for new line)"}
-                className={`input-terminal font-mono resize-none border-0
+                className={`font-mono resize-none border-0
                          ${isMobile ? 'min-h-[40px] max-h-[80px] text-xs pr-10' : 'min-h-[50px] max-h-[120px] text-sm pr-12'}
-                         bg-background/50 text-primary placeholder:text-muted-foreground`}
+                         bg-background/50 text-primary placeholder:text-muted-foreground focus:outline-none`}
                 rows={isMobile ? 1 : 2}
               />
               <Button
@@ -767,7 +767,7 @@ const Chat: React.FC = () => {
 
       {/* Settings Dialog for Matrix Color Customization */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="terminal-border bg-card">
+        <DialogContent className="bg-card">
           <DialogHeader>
             <DialogTitle className="font-mono text-primary">Matrix Animation Settings</DialogTitle>
             <DialogDescription className="font-mono text-sm">
