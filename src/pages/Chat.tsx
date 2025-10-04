@@ -785,17 +785,25 @@ const Chat: React.FC = () => {
                   type="text"
                   value={profile?.matrix_color?.toUpperCase() || '#00FF00'}
                   onChange={(e) => {
-                    const value = e.target.value.toUpperCase();
-                    if (/^#[0-9A-F]{0,6}$/i.test(value)) {
-                      if (value.length === 7) {
-                        updateProfile({ matrix_color: value });
-                      }
+                    let value = e.target.value.toUpperCase();
+                    // Auto-add # if not present
+                    if (value && !value.startsWith('#')) {
+                      value = '#' + value;
+                    }
+                    // Allow typing and update immediately
+                    if (/^#[0-9A-F]{0,6}$/i.test(value) || value === '#') {
+                      updateProfile({ matrix_color: value.length === 7 ? value : (profile?.matrix_color || '#00ff00') });
                     }
                   }}
                   onBlur={(e) => {
-                    const value = e.target.value;
+                    let value = e.target.value.toUpperCase();
+                    if (!value.startsWith('#')) {
+                      value = '#' + value;
+                    }
                     if (!/^#[0-9A-F]{6}$/i.test(value)) {
-                      updateProfile({ matrix_color: profile?.matrix_color || '#00ff00' });
+                      updateProfile({ matrix_color: '#00FF00' });
+                    } else {
+                      updateProfile({ matrix_color: value });
                     }
                   }}
                   className="font-mono text-sm flex-1 bg-background/50"
