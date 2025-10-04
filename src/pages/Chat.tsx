@@ -57,6 +57,7 @@ const Chat: React.FC = () => {
   const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [tempColorValue, setTempColorValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -338,6 +339,11 @@ const Chat: React.FC = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, shouldAutoScroll]);
+
+  // Sync temp color value with profile
+  useEffect(() => {
+    setTempColorValue(profile?.matrix_color || '#00FF00');
+  }, [profile?.matrix_color]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
@@ -783,31 +789,32 @@ const Chat: React.FC = () => {
                 />
                 <Input
                   type="text"
-                  value={profile?.matrix_color?.toUpperCase() || '#00FF00'}
+                  value={tempColorValue.toUpperCase()}
                   onChange={(e) => {
                     let value = e.target.value.toUpperCase();
-                    // Auto-add # if not present
+                    // Auto-add # if not present and user starts typing
                     if (value && !value.startsWith('#')) {
                       value = '#' + value;
                     }
-                    // Allow typing and update immediately
-                    if (/^#[0-9A-F]{0,6}$/i.test(value) || value === '#') {
-                      updateProfile({ matrix_color: value.length === 7 ? value : (profile?.matrix_color || '#00ff00') });
+                    // Allow free typing - update temp value
+                    setTempColorValue(value);
+                  }}
+                  onBlur={() => {
+                    let value = tempColorValue.toUpperCase();
+                    // Validate and update profile
+                    if (/^#[0-9A-F]{6}$/i.test(value)) {
+                      updateProfile({ matrix_color: value });
+                    } else {
+                      // Reset to profile color if invalid
+                      setTempColorValue(profile?.matrix_color || '#00FF00');
                     }
                   }}
-                  onBlur={(e) => {
-                    let value = e.target.value.toUpperCase();
-                    if (!value.startsWith('#')) {
-                      value = '#' + value;
-                    }
-                    if (!/^#[0-9A-F]{6}$/i.test(value)) {
-                      updateProfile({ matrix_color: '#00FF00' });
-                    } else {
-                      updateProfile({ matrix_color: value });
-                    }
+                  onFocus={() => {
+                    // Allow user to select all and replace easily
+                    setTempColorValue(tempColorValue || '#');
                   }}
                   className="font-mono text-sm flex-1 bg-background/50"
-                  placeholder="#00FF00"
+                  placeholder="e.g., #00FF00, FF5733"
                   maxLength={7}
                 />
               </div>

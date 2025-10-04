@@ -63,7 +63,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
           )}
         </Button>
       </div>
-      <div className="rounded-b-lg border border-t-0 border-primary/30 overflow-hidden w-full">
+      <div className="rounded-b-lg overflow-hidden w-full">
         <div 
           className="max-h-[80vh] overflow-x-auto overflow-y-auto scrollbar-hidden w-full"
           style={{
