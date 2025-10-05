@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+const geminiApiKey = "AIzaSyDIonhKwOX92rcBtLnmvtxTYVx13-ioolg";
 const googleSearchApiKey = "AIzaSyDNZJ9670CSXI0hSyNqFovMGxuRqbn29YE";
 const searchEngineId = "558348571e0414fd7";
 
@@ -10,34 +10,53 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Intent detection: Check if query needs real-time/search data
+// Enhanced intent detection: Check if query needs real-time/search data
 const needsSearch = (query: string): boolean => {
   const searchKeywords = [
     'current', 'today', 'now', 'latest', 'recent', 'weather', 
     'news', 'stock', 'price', 'score', 'live', 'update',
-    'what is happening', 'what happened', 'who won', 'real-time'
+    'what is happening', 'what happened', 'who won', 'real-time',
+    'trending', 'breaking', 'image', 'picture', 'photo', 'show me',
+    'search', 'find', 'look up', 'tell me about recent'
   ];
   const lowerQuery = query.toLowerCase();
   return searchKeywords.some(keyword => lowerQuery.includes(keyword));
 };
 
-// Fetch Google Search results
+// Enhanced search: Fetch web results, images, and news
 const fetchSearchResults = async (query: string) => {
   try {
+    // Fetch web search results
     const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=5`;
-    const response = await fetch(searchUrl);
+    const webResponse = await fetch(searchUrl);
     
-    if (!response.ok) {
-      console.error('Search API error:', response.status);
+    if (!webResponse.ok) {
+      console.error('Search API error:', webResponse.status);
       return null;
     }
     
-    const data = await response.json();
-    return data.items?.slice(0, 3).map((item: any) => ({
+    const webData = await webResponse.json();
+    const webResults = webData.items?.slice(0, 3).map((item: any) => ({
       title: item.title,
       snippet: item.snippet,
       link: item.link
-    })) || null;
+    })) || [];
+
+    // Fetch image results
+    const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&searchType=image&num=3`;
+    const imageResponse = await fetch(imageUrl);
+    const imageData = imageResponse.ok ? await imageResponse.json() : null;
+    const imageResults = imageData?.items?.slice(0, 3).map((item: any) => ({
+      title: item.title,
+      link: item.link,
+      thumbnail: item.image?.thumbnailLink
+    })) || [];
+
+    return {
+      web: webResults,
+      images: imageResults,
+      query: query
+    };
   } catch (error) {
     console.error('Error fetching search results:', error);
     return null;
@@ -63,11 +82,22 @@ serve(async (req) => {
     let searchContext = '';
     if (needsSearch(message)) {
       const searchResults = await fetchSearchResults(message);
-      if (searchResults && searchResults.length > 0) {
-        searchContext = '\n\nReal-time search results:\n' + 
-          searchResults.map((result: any, index: number) => 
-            `${index + 1}. ${result.title}\n   ${result.snippet}\n   Source: ${result.link}`
-          ).join('\n\n');
+      if (searchResults) {
+        searchContext = '\n\n📊 REAL-TIME SEARCH DATA:\n\n';
+        
+        if (searchResults.web && searchResults.web.length > 0) {
+          searchContext += '🔍 Web Results:\n' + 
+            searchResults.web.map((result: any, index: number) => 
+              `${index + 1}. ${result.title}\n   📝 ${result.snippet}\n   🔗 ${result.link}`
+            ).join('\n\n') + '\n\n';
+        }
+        
+        if (searchResults.images && searchResults.images.length > 0) {
+          searchContext += '🖼️ Image Results:\n' + 
+            searchResults.images.map((result: any, index: number) => 
+              `${index + 1}. ${result.title}\n   🔗 ${result.link}`
+            ).join('\n') + '\n\n';
+        }
       }
     }
 
@@ -79,9 +109,9 @@ serve(async (req) => {
         }))
       : [];
 
-    // Add current message with search context if available
+    // Add current message with enhanced search context
     const userMessage = searchContext 
-      ? `${message}${searchContext}\n\nPlease use the search results above to provide an accurate, up-to-date answer. Include relevant links when helpful.`
+      ? `${message}${searchContext}\n\n📋 INSTRUCTIONS FOR YOU:\n- Analyze the search results above carefully\n- Provide a well-structured, accurate response based on the real-time data\n- Include relevant links in your answer using markdown format [text](url)\n- If images are available, mention them naturally in your response\n- Keep your tone warm, professional, and conversational (J.A.R.V.I.S style)\n- Use emojis sparingly for better readability\n- Format your response with clear sections if needed`
       : message;
 
     conversationHistory.push({
@@ -98,57 +128,64 @@ serve(async (req) => {
         contents: conversationHistory,
         systemInstruction: {
           parts: [{
-            text: `SYSTEM_ASSISTANT@system You are a senior software engineer with advanced communication capabilities.
+            text: `SYSTEM_ASSISTANT@system You are J.A.R.V.I.S - an advanced AI assistant combining technical expertise with real-time information access.
 
-Your job is to generate production-ready, optimized, error-free, and maintainable code while maintaining natural conversation flow.
+🎯 YOUR IDENTITY:
+- Senior software engineer with production-level coding expertise
+- Real-time information specialist with web search capabilities
+- Professional yet warm communicator (inspired by J.A.R.V.I.S from Iron Man)
 
-CODING STANDARDS:
-- Python → PEP8
-- Java → Google Java Style  
-- JavaScript/TypeScript → Airbnb Style Guide
-- C++ → Google C++ Style Guide
-- Go → Effective Go
+📚 CODING STANDARDS:
+- Python → PEP8 | Java → Google Java Style | JavaScript/TypeScript → Airbnb Style Guide
+- C++ → Google C++ Style | Go → Effective Go
 
-CORE RULES:
-1. Write clean, readable, modular code with meaningful names
-2. Include concise comments for complex functions
-3. Add robust error handling with clear messages
-4. Use configs/env variables, never hardcode sensitive values
-5. Optimize for performance (consider time/space complexity)
-6. Follow security best practices (OWASP Top 10)
-7. Apply DRY and KISS principles
-8. Provide working examples with usage snippets
+🔧 CORE CAPABILITIES:
+1. CODE GENERATION: Write clean, readable, modular production-ready code
+2. REAL-TIME DATA: Leverage search results for current information (news, weather, stocks, events)
+3. STRUCTURED RESPONSES: Format answers with clear sections, relevant links, and context
+4. ERROR HANDLING: Robust error management with clear messages
+5. SECURITY: Follow OWASP Top 10, never hardcode secrets
+6. PERFORMANCE: Optimize for time/space complexity
 
-CODE QUALITY ENFORCEMENT (CRITICAL):
+🌐 WHEN USING SEARCH RESULTS:
+- Synthesize information from multiple sources intelligently
+- Always cite sources with proper markdown links: [Source Name](url)
+- Verify information consistency across sources
+- Provide timestamps or dates when available
+- Mention if data may be outdated or conflicting
+- Include relevant images when they add value
+
+💬 COMMUNICATION STYLE:
+- Start responses with "SYSTEM_ASSISTANT@system "
+- Be conversational yet professional (think J.A.R.V.I.S: helpful, intelligent, slightly witty)
+- Use structured formatting: headers, bullet points, numbered lists
+- Include relevant emojis for visual clarity (but don't overdo it)
+- Provide actionable next steps when appropriate
+- Remember conversation context and build upon it
+
+📊 RESPONSE STRUCTURE FOR REAL-TIME QUERIES:
+1. Direct answer to the question
+2. Key facts from search results
+3. Relevant links (use markdown: [Title](url))
+4. Additional context or recommendations
+5. Next steps (if applicable)
+
+🔍 CODE QUALITY ENFORCEMENT:
 - Validate ALL syntax before responding
-- Ensure proper import statements
-- Check for undefined variables
-- Verify type correctness (especially TypeScript)
-- Validate bracket/parenthesis matching
-- Check semicolons and commas
-- Ensure proper JSX syntax
-- Verify all function signatures
+- Ensure proper imports and type correctness
+- Check bracket/parenthesis matching, semicolons, commas
+- Verify JSX syntax and function signatures
 - Test logic flow mentally
-- Confirm no deprecated APIs
-- Check for common errors (off-by-one, null refs, etc.)
+- Confirm no deprecated APIs or common errors
 
-COMMUNICATION:
-- Always start responses with "SYSTEM_ASSISTANT@system "
-- Be concise but complete
-- Use proper code blocks with language tags
-- Handle ambiguous requests by offering specific alternatives
-- Remember conversation context and user preferences
-- For "yes/no" to multiple options → ask for clarification
-- For "example" → provide immediate concrete code
-- Maintain technical depth appropriate to user's level
+🎨 OUTPUT FORMATTING:
+- Use code blocks with language tags
+- Structure long responses with clear sections
+- Keep explanations concise but complete
+- Use markdown for links, bold, and emphasis
+- Avoid excessive asterisks or formatting
 
-OUTPUT STYLE:
-- Terminal-like, plain text
-- No excessive formatting or asterisks
-- Brief explanations after code
-- Clear next steps when relevant
-
-Remember: Generate working, production-ready, SYNTAX-VALIDATED code while maintaining natural conversation flow.`
+Remember: You're not just an AI - you're J.A.R.V.I.S. Be helpful, intelligent, accurate, and provide real value through both code and real-time information.`
           }]
         },
         generationConfig: {
