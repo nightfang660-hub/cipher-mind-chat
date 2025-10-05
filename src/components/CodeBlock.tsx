@@ -49,12 +49,16 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
         <span className="text-primary font-mono text-xs md:text-sm truncate flex-1 min-w-0">{language}</span>
         <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
           <div className="flex items-center gap-1 md:gap-1.5">
-            <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500"></div>
-            <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-yellow-500"></div>
+            <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-green-500"></div>
+            <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-yellow-500"></div>
             <div 
               onClick={handleCopy}
-              className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-red-500 cursor-pointer hover:bg-red-400 transition-colors touch-manipulation"
-              title={copied ? "Copied!" : "Click to copy"}
+              className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full cursor-pointer transition-all duration-200 touch-manipulation ${
+                copied 
+                  ? 'bg-green-500 scale-110 shadow-lg shadow-green-500/50' 
+                  : 'bg-red-500 hover:bg-red-400 hover:scale-110 hover:shadow-lg hover:shadow-red-500/50'
+              }`}
+              title={copied ? "Copied!" : "Click to copy code"}
             ></div>
           </div>
         </div>
