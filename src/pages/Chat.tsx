@@ -21,11 +21,17 @@ import { User as UserType, Session } from '@supabase/supabase-js';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useProfile } from '@/hooks/useProfile';
 
+interface SearchResult {
+  web?: Array<{ title: string; snippet: string; link: string }>;
+  images?: Array<{ title: string; link: string; thumbnail: string }>;
+}
+
 interface Message {
   id: string;
   content: string;
   isUser: boolean;
   timestamp: Date;
+  searchResults?: SearchResult;
 }
 
 interface Conversation {
@@ -99,6 +105,54 @@ const Chat: React.FC = () => {
     }
 
     return parts.length > 0 ? parts : [{ type: 'text', content }];
+  };
+
+  // Function to render text with clickable links and emojis preserved
+  const renderTextWithLinks = (text: string) => {
+    // Match markdown links [text](url) and plain URLs
+    const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    
+    let parts: Array<{ type: 'text' | 'link'; content: string; url?: string }> = [];
+    let lastIndex = 0;
+    let match;
+
+    // First, process markdown links
+    const processedText = text.replace(markdownLinkRegex, (match, linkText, url) => {
+      return `__MDLINK__${linkText}__MDURL__${url}__MDEND__`;
+    });
+
+    // Split by markdown link placeholders and URLs
+    const segments = processedText.split(/(__MDLINK__.*?__MDEND__|https?:\/\/[^\s]+)/g);
+    
+    segments.forEach(segment => {
+      if (segment.startsWith('__MDLINK__')) {
+        const linkMatch = segment.match(/__MDLINK__(.*?)__MDURL__(.*?)__MDEND__/);
+        if (linkMatch) {
+          parts.push({ type: 'link', content: linkMatch[1], url: linkMatch[2] });
+        }
+      } else if (segment.match(/^https?:\/\//)) {
+        parts.push({ type: 'link', content: segment, url: segment });
+      } else if (segment) {
+        parts.push({ type: 'text', content: segment });
+      }
+    });
+
+    return parts.map((part, index) => 
+      part.type === 'link' ? (
+        <a
+          key={index}
+          href={part.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300 underline decoration-dotted underline-offset-2 transition-colors"
+        >
+          {part.content}
+        </a>
+      ) : (
+        <span key={index}>{part.content}</span>
+      )
+    );
   };
 
   useEffect(() => {
@@ -304,7 +358,8 @@ const Chat: React.FC = () => {
         id: (Date.now() + 1).toString(),
         content: data.response || 'Sorry, I could not process your request.',
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        searchResults: data.searchResults
       };
       
       setMessages(prev => [...prev, aiMessage]);
@@ -672,26 +727,78 @@ const Chat: React.FC = () => {
                           />
                         </div>
                       ) : (
-                        parseMessageContent(message.content).map((part, index) => (
-                          <React.Fragment key={index}>
-                            {part.type === 'text' ? (
-                              <div 
-                                className={`whitespace-pre-wrap ${isMobile ? 'max-w-[90vw] break-words' : ''}`}
-                                style={{ 
-                                  color: message.isUser 
-                                    ? profile?.user_input_color || '#00ff00' 
-                                    : profile?.ai_response_color || '#66ff66' 
-                                }}
-                              >
-                                {part.content}
+                        <>
+                          {parseMessageContent(message.content).map((part, index) => (
+                            <React.Fragment key={index}>
+                              {part.type === 'text' ? (
+                                <div 
+                                  className={`whitespace-pre-wrap ${isMobile ? 'max-w-[90vw] break-words' : ''}`}
+                                  style={{ 
+                                    color: message.isUser 
+                                      ? profile?.user_input_color || '#00ff00' 
+                                      : profile?.ai_response_color || '#66ff66' 
+                                  }}
+                                >
+                                  {renderTextWithLinks(part.content)}
+                                </div>
+                              ) : (
+                                <div className="my-2 md:my-4 overflow-x-auto">
+                                  <CodeBlock language={part.language} code={part.content} />
+                                </div>
+                              )}
+                            </React.Fragment>
+                          ))}
+                          
+                          {/* Display search results images if available */}
+                          {!message.isUser && message.searchResults?.images && message.searchResults.images.length > 0 && (
+                            <div className="mt-4 space-y-2">
+                              <div className="text-xs font-mono opacity-70 mb-2">🖼️ Related Images:</div>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {message.searchResults.images.slice(0, 3).map((img, idx) => (
+                                  <div 
+                                    key={idx} 
+                                    className="relative group overflow-hidden rounded-lg border border-primary/20 bg-background/30 backdrop-blur-sm"
+                                  >
+                                    <a 
+                                      href={img.link} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="block"
+                                    >
+                                      <img 
+                                        src={img.thumbnail || img.link} 
+                                        alt={img.title}
+                                        className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-110"
+                                        loading="lazy"
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                                          <p className="text-[10px] text-white font-mono truncate">{img.title}</p>
+                                        </div>
+                                      </div>
+                                      {/* Download button overlay */}
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          const link = document.createElement('a');
+                                          link.href = img.link;
+                                          link.download = img.title || 'image';
+                                          link.target = '_blank';
+                                          link.click();
+                                        }}
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-primary/90 hover:bg-primary text-black rounded-full p-1.5 hover:scale-110"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                      </button>
+                                    </a>
+                                  </div>
+                                ))}
                               </div>
-                            ) : (
-                              <div className="my-2 md:my-4 overflow-x-auto">
-                                <CodeBlock language={part.language} code={part.content} />
-                              </div>
-                            )}
-                          </React.Fragment>
-                        ))
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

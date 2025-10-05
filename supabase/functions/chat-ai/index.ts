@@ -80,8 +80,9 @@ serve(async (req) => {
 
     // Check if we need to fetch search results
     let searchContext = '';
+    let searchResults = null;
     if (needsSearch(message)) {
-      const searchResults = await fetchSearchResults(message);
+      searchResults = await fetchSearchResults(message);
       if (searchResults) {
         searchContext = '\n\n📊 REAL-TIME SEARCH DATA:\n\n';
         
@@ -111,7 +112,7 @@ serve(async (req) => {
 
     // Add current message with enhanced search context
     const userMessage = searchContext 
-      ? `${message}${searchContext}\n\n📋 INSTRUCTIONS FOR YOU:\n- Analyze the search results above carefully\n- Provide a well-structured, accurate response based on the real-time data\n- Include relevant links in your answer using markdown format [text](url)\n- If images are available, mention them naturally in your response\n- Keep your tone warm, professional, and conversational (J.A.R.V.I.S style)\n- Use emojis sparingly for better readability\n- Format your response with clear sections if needed`
+      ? `${message}${searchContext}\n\n📋 INSTRUCTIONS FOR YOU:\n- Analyze the search results above carefully\n- Provide a well-structured, accurate response based on the real-time data\n- Include relevant links in your answer using markdown format [text](url)\n- If images are available, mention them naturally in your response (images will be displayed separately)\n- Keep your tone warm, professional, and conversational (J.A.R.V.I.S style)\n- Use emojis naturally throughout your response for better engagement and readability 😊\n- Format your response with clear sections if needed\n- Be friendly and helpful like talking to a friend`
       : message;
 
     conversationHistory.push({
@@ -208,14 +209,24 @@ Remember: You're not just an AI - you're J.A.R.V.I.S. Be helpful, intelligent, a
 
     let aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'SYSTEM_ASSISTANT@system Error processing request. Please try again.';
     
-    // Clean up response formatting while preserving structure
-    aiResponse = aiResponse.replace(/\*\*/g, '').replace(/\*/g, '').replace(/#{1,6}\s/g, '').trim();
+    // Clean up response formatting while preserving emojis and structure
+    aiResponse = aiResponse.replace(/\*\*/g, '').replace(/#{1,6}\s/g, '').trim();
     
     // Ensure proper prefix format
     if (!aiResponse.startsWith('SYSTEM_ASSISTANT@system')) {
       aiResponse = `SYSTEM_ASSISTANT@system ${aiResponse}`;
     }
-    return new Response(JSON.stringify({ response: aiResponse }), {
+
+    // Prepare response with search results if available
+    const responseData: any = { response: aiResponse };
+    if (searchResults && (searchResults.web?.length || searchResults.images?.length)) {
+      responseData.searchResults = {
+        web: searchResults.web,
+        images: searchResults.images
+      };
+    }
+
+    return new Response(JSON.stringify(responseData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
