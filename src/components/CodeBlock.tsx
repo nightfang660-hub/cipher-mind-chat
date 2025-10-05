@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Copy, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface CodeBlockProps {
   language?: string;
@@ -47,20 +45,19 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
 
   return (
     <div className="relative my-2 md:my-4 w-full max-w-full overflow-hidden">
-      <div className="flex items-center justify-between bg-background rounded-t-lg px-2 md:px-4 py-1 md:py-1.5 gap-2">
+      <div className="flex items-center justify-between bg-background rounded-t-lg px-2 md:px-4 py-1.5 md:py-2 gap-2">
         <span className="text-primary font-mono text-xs md:text-sm truncate flex-1 min-w-0">{language}</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleCopy}
-          className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-primary/20 touch-manipulation flex-shrink-0"
-        >
-          {copied ? (
-            <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-primary" />
-          ) : (
-            <Copy className="w-2.5 h-2.5 md:w-3 md:h-3 text-primary" />
-          )}
-        </Button>
+        <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 md:gap-1.5">
+            <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500"></div>
+            <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-yellow-500"></div>
+            <div 
+              onClick={handleCopy}
+              className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-red-500 cursor-pointer hover:bg-red-400 transition-colors touch-manipulation"
+              title={copied ? "Copied!" : "Click to copy"}
+            ></div>
+          </div>
+        </div>
       </div>
       <div className="rounded-b-lg overflow-hidden w-full">
         <div 

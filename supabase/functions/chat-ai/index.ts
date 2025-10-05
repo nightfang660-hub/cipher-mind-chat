@@ -2,10 +2,46 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+const googleSearchApiKey = "AIzaSyDNZJ9670CSXI0hSyNqFovMGxuRqbn29YE";
+const searchEngineId = "558348571e0414fd7";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Intent detection: Check if query needs real-time/search data
+const needsSearch = (query: string): boolean => {
+  const searchKeywords = [
+    'current', 'today', 'now', 'latest', 'recent', 'weather', 
+    'news', 'stock', 'price', 'score', 'live', 'update',
+    'what is happening', 'what happened', 'who won', 'real-time'
+  ];
+  const lowerQuery = query.toLowerCase();
+  return searchKeywords.some(keyword => lowerQuery.includes(keyword));
+};
+
+// Fetch Google Search results
+const fetchSearchResults = async (query: string) => {
+  try {
+    const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=5`;
+    const response = await fetch(searchUrl);
+    
+    if (!response.ok) {
+      console.error('Search API error:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    return data.items?.slice(0, 3).map((item: any) => ({
+      title: item.title,
+      snippet: item.snippet,
+      link: item.link
+    })) || null;
+  } catch (error) {
+    console.error('Error fetching search results:', error);
+    return null;
+  }
 };
 
 serve(async (req) => {
@@ -23,6 +59,18 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY not found');
     }
 
+    // Check if we need to fetch search results
+    let searchContext = '';
+    if (needsSearch(message)) {
+      const searchResults = await fetchSearchResults(message);
+      if (searchResults && searchResults.length > 0) {
+        searchContext = '\n\nReal-time search results:\n' + 
+          searchResults.map((result: any, index: number) => 
+            `${index + 1}. ${result.title}\n   ${result.snippet}\n   Source: ${result.link}`
+          ).join('\n\n');
+      }
+    }
+
     // Build conversation history for context
     const conversationHistory = context && context.length > 0 
       ? context.map((msg: any) => ({
@@ -31,10 +79,14 @@ serve(async (req) => {
         }))
       : [];
 
-    // Add current message
+    // Add current message with search context if available
+    const userMessage = searchContext 
+      ? `${message}${searchContext}\n\nPlease use the search results above to provide an accurate, up-to-date answer. Include relevant links when helpful.`
+      : message;
+
     conversationHistory.push({
       role: 'user',
-      parts: [{ text: message }]
+      parts: [{ text: userMessage }]
     });
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
