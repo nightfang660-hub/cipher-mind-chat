@@ -752,47 +752,47 @@ const Chat: React.FC = () => {
                           {/* Display search results images if available */}
                           {!message.isUser && message.searchResults?.images && message.searchResults.images.length > 0 && (
                             <div className="mt-4 space-y-2">
-                              <div className="text-xs font-mono opacity-70 mb-2">🖼️ Related Images:</div>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {message.searchResults.images.slice(0, 3).map((img, idx) => (
+                              <div className="text-xs font-mono opacity-70 mb-2">🖼️ Related Images (4K HD):</div>
+                              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                {message.searchResults.images.slice(0, 5).map((img, idx) => (
                                   <div 
                                     key={idx} 
-                                    className="relative group overflow-hidden rounded-lg border border-primary/20 bg-background/30 backdrop-blur-sm"
+                                    className="relative group overflow-hidden rounded-lg border border-primary/30 bg-background/30 backdrop-blur-sm shadow-lg hover:shadow-primary/20 transition-all duration-300"
                                   >
-                                    <a 
-                                      href={img.link} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="block"
-                                    >
+                                    <div className="aspect-square">
                                       <img 
-                                        src={img.thumbnail || img.link} 
+                                        src={img.link}
                                         alt={img.title}
-                                        className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-110"
+                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                                         loading="lazy"
-                                      />
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <div className="absolute bottom-0 left-0 right-0 p-2">
-                                          <p className="text-[10px] text-white font-mono truncate">{img.title}</p>
-                                        </div>
-                                      </div>
-                                      {/* Download button overlay */}
-                                      <button
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          const link = document.createElement('a');
-                                          link.href = img.link;
-                                          link.download = img.title || 'image';
-                                          link.target = '_blank';
-                                          link.click();
+                                        onError={(e) => {
+                                          // Fallback to thumbnail if main image fails
+                                          (e.target as HTMLImageElement).src = img.thumbnail || img.link;
                                         }}
-                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-primary/90 hover:bg-primary text-black rounded-full p-1.5 hover:scale-110"
-                                      >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                        </svg>
-                                      </button>
-                                    </a>
+                                      />
+                                    </div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                      <div className="absolute bottom-0 left-0 right-0 p-2">
+                                        <p className="text-[10px] text-white font-mono truncate">{img.title}</p>
+                                      </div>
+                                    </div>
+                                    {/* Download button overlay with enhanced animation */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        const link = document.createElement('a');
+                                        link.href = img.link;
+                                        link.download = img.title || 'image';
+                                        link.target = '_blank';
+                                        link.click();
+                                      }}
+                                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110 bg-primary/90 hover:bg-primary text-black rounded-full p-2 shadow-lg hover:shadow-primary/50"
+                                      title="Download Image"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                      </svg>
+                                    </button>
                                   </div>
                                 ))}
                               </div>
