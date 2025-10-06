@@ -190,10 +190,10 @@ Remember: You're not just an AI - you're J.A.R.V.I.S. Be helpful, intelligent, a
           }]
         },
         generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 512,
+          temperature: 0.4,
+          topK: 64,
+          topP: 0.98,
+          maxOutputTokens: 2048,
         },
       }),
     });
