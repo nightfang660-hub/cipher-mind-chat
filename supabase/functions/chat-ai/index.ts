@@ -16,15 +16,26 @@ const needsSearch = (query: string): boolean => {
     'current', 'today', 'now', 'latest', 'recent', 'weather', 
     'news', 'stock', 'price', 'score', 'live', 'update',
     'what is happening', 'what happened', 'who won', 'real-time',
-    'trending', 'breaking', 'image', 'picture', 'photo', 'show me',
-    'search', 'find', 'look up', 'tell me about recent'
+    'trending', 'breaking', 'search', 'find', 'look up', 'tell me about recent'
   ];
   const lowerQuery = query.toLowerCase();
   return searchKeywords.some(keyword => lowerQuery.includes(keyword));
 };
 
-// Enhanced search: Fetch web results, images, and news
-const fetchSearchResults = async (query: string) => {
+// Detect if query needs images (visual content)
+const needsImages = (query: string): boolean => {
+  const imageKeywords = [
+    'image', 'images', 'picture', 'pictures', 'photo', 'photos',
+    'show me', 'look like', 'looks like', 'appearance', 'visual',
+    'see', 'view', 'gallery', 'screenshot', 'pic', 'pics',
+    'how does', 'what does', 'design', 'style', 'color', 'face'
+  ];
+  const lowerQuery = query.toLowerCase();
+  return imageKeywords.some(keyword => lowerQuery.includes(keyword));
+};
+
+// Enhanced search: Fetch web results and optionally images
+const fetchSearchResults = async (query: string, includeImages: boolean = false) => {
   try {
     // Fetch web search results
     const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=5`;
@@ -42,15 +53,19 @@ const fetchSearchResults = async (query: string) => {
       link: item.link
     })) || [];
 
-    // Fetch image results with highest quality (huge = 4K+ HD)
-    const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&searchType=image&imgSize=huge&num=5`;
-    const imageResponse = await fetch(imageUrl);
-    const imageData = imageResponse.ok ? await imageResponse.json() : null;
-    const imageResults = imageData?.items?.slice(0, 5).map((item: any) => ({
-      title: item.title,
-      link: item.link,
-      thumbnail: item.image?.thumbnailLink
-    })) || [];
+    let imageResults = [];
+    
+    // Only fetch images if the query explicitly asks for visual content
+    if (includeImages) {
+      const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&searchType=image&imgSize=huge&num=5`;
+      const imageResponse = await fetch(imageUrl);
+      const imageData = imageResponse.ok ? await imageResponse.json() : null;
+      imageResults = imageData?.items?.slice(0, 5).map((item: any) => ({
+        title: item.title,
+        link: item.link,
+        thumbnail: item.image?.thumbnailLink
+      })) || [];
+    }
 
     return {
       web: webResults,
@@ -81,8 +96,10 @@ serve(async (req) => {
     // Check if we need to fetch search results
     let searchContext = '';
     let searchResults = null;
-    if (needsSearch(message)) {
-      searchResults = await fetchSearchResults(message);
+    const shouldFetchImages = needsImages(message);
+    
+    if (needsSearch(message) || shouldFetchImages) {
+      searchResults = await fetchSearchResults(message, shouldFetchImages);
       if (searchResults) {
         searchContext = '\n\n📊 REAL-TIME SEARCH DATA:\n\n';
         
@@ -94,10 +111,11 @@ serve(async (req) => {
         }
         
         if (searchResults.images && searchResults.images.length > 0) {
-          searchContext += '🖼️ Image Results:\n' + 
+          searchContext += '🖼️ Image Results (HIGH QUALITY):\n' + 
             searchResults.images.map((result: any, index: number) => 
               `${index + 1}. ${result.title}\n   🔗 ${result.link}`
             ).join('\n') + '\n\n';
+          searchContext += '✨ Note: These images will be displayed directly in the chat for the user.\n\n';
         }
       }
     }
