@@ -778,13 +778,56 @@ const Chat: React.FC = () => {
                                     </div>
                                     {/* Download button overlay with enhanced animation */}
                                     <button
-                                      onClick={(e) => {
+                                      onClick={async (e) => {
                                         e.preventDefault();
-                                        const link = document.createElement('a');
-                                        link.href = img.link;
-                                        link.download = img.title || 'image';
-                                        link.target = '_blank';
-                                        link.click();
+                                        e.stopPropagation();
+                                        try {
+                                          // Use edge function proxy to download image
+                                          const { data, error } = await supabase.functions.invoke('download-image', {
+                                            body: { imageUrl: img.link }
+                                          });
+
+                                          if (error) throw error;
+
+                                          // Create blob from response
+                                          const blob = new Blob([data], { type: 'image/jpeg' });
+                                          const url = window.URL.createObjectURL(blob);
+                                          const link = document.createElement('a');
+                                          link.href = url;
+                                          
+                                          // Generate filename from title or use default
+                                          const filename = img.title 
+                                            ? `${img.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.jpg`
+                                            : `image_${Date.now()}.jpg`;
+                                          link.download = filename;
+                                          
+                                          // Trigger download
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          
+                                          // Cleanup
+                                          document.body.removeChild(link);
+                                          window.URL.revokeObjectURL(url);
+                                        } catch (error) {
+                                          console.error('Download failed, trying direct method:', error);
+                                          // Fallback: try direct blob fetch
+                                          try {
+                                            const response = await fetch(img.link);
+                                            const blob = await response.blob();
+                                            const url = window.URL.createObjectURL(blob);
+                                            const link = document.createElement('a');
+                                            link.href = url;
+                                            link.download = img.title || `image_${Date.now()}.jpg`;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                            window.URL.revokeObjectURL(url);
+                                          } catch (fallbackError) {
+                                            console.error('All download methods failed:', fallbackError);
+                                            // Last resort: open in new tab
+                                            window.open(img.link, '_blank');
+                                          }
+                                        }
                                       }}
                                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110 bg-primary/90 hover:bg-primary text-black rounded-full p-2 shadow-lg hover:shadow-primary/50"
                                       title="Download Image"
