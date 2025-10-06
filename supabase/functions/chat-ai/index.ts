@@ -42,8 +42,8 @@ const fetchSearchResults = async (query: string) => {
       link: item.link
     })) || [];
 
-    // Fetch image results
-    const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&searchType=image&num=3`;
+    // Fetch image results with higher quality (xlarge = 1024x1024+)
+    const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&searchType=image&imgSize=xlarge&num=3`;
     const imageResponse = await fetch(imageUrl);
     const imageData = imageResponse.ok ? await imageResponse.json() : null;
     const imageResults = imageData?.items?.slice(0, 3).map((item: any) => ({
