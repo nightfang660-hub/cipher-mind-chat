@@ -751,66 +751,64 @@ const Chat: React.FC = () => {
                           
                           {/* Display search results images if available */}
                           {!message.isUser && message.searchResults?.images && message.searchResults.images.length > 0 && (
-                            <div className="mt-4 space-y-2">
-                              <div className="text-xs font-mono opacity-70 mb-2">🖼️ Related Images (4K HD):</div>
-                              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            <div className="mt-6 space-y-3">
+                              <div className="flex items-center gap-2 text-sm font-mono text-primary/90 mb-3">
+                                <Sparkles className="w-4 h-4" />
+                                <span>Related Images (4K HD)</span>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                 {message.searchResults.images.slice(0, 5).map((img, idx) => (
                                   <div 
                                     key={idx} 
-                                    className="relative group overflow-hidden rounded-lg border border-primary/30 bg-background/30 backdrop-blur-sm shadow-lg hover:shadow-primary/20 transition-all duration-300"
+                                    className="relative group overflow-hidden rounded-xl border-2 border-primary/20 bg-card/50 backdrop-blur-md shadow-xl hover:shadow-2xl hover:shadow-primary/30 hover:border-primary/60 transition-all duration-500 hover:-translate-y-1"
                                   >
-                                    <div className="aspect-square">
+                                    {/* Image Container */}
+                                    <div className="aspect-square relative overflow-hidden">
                                       <img 
                                         src={img.link}
                                         alt={img.title}
-                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                        className="w-full h-full object-cover transition-all duration-500 group-hover:scale-125 group-hover:rotate-2"
                                         loading="lazy"
                                         onError={(e) => {
-                                          // Fallback to thumbnail if main image fails
                                           (e.target as HTMLImageElement).src = img.thumbnail || img.link;
                                         }}
                                       />
-                                    </div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                      <div className="absolute bottom-0 left-0 right-0 p-2">
-                                        <p className="text-[10px] text-white font-mono truncate">{img.title}</p>
+                                      {/* Gradient overlay */}
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                                          <p className="text-xs text-white font-mono truncate drop-shadow-lg">{img.title}</p>
+                                        </div>
                                       </div>
                                     </div>
-                                    {/* Download button overlay with enhanced animation */}
+                                    
+                                    {/* Download button */}
                                     <button
                                       onClick={async (e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         try {
-                                          // Use edge function proxy to download image
                                           const { data, error } = await supabase.functions.invoke('download-image', {
                                             body: { imageUrl: img.link }
                                           });
 
                                           if (error) throw error;
 
-                                          // Create blob from response
                                           const blob = new Blob([data], { type: 'image/jpeg' });
                                           const url = window.URL.createObjectURL(blob);
                                           const link = document.createElement('a');
                                           link.href = url;
                                           
-                                          // Generate filename from title or use default
                                           const filename = img.title 
                                             ? `${img.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.jpg`
                                             : `image_${Date.now()}.jpg`;
                                           link.download = filename;
                                           
-                                          // Trigger download
                                           document.body.appendChild(link);
                                           link.click();
-                                          
-                                          // Cleanup
                                           document.body.removeChild(link);
                                           window.URL.revokeObjectURL(url);
                                         } catch (error) {
                                           console.error('Download failed, trying direct method:', error);
-                                          // Fallback: try direct blob fetch
                                           try {
                                             const response = await fetch(img.link);
                                             const blob = await response.blob();
@@ -824,15 +822,14 @@ const Chat: React.FC = () => {
                                             window.URL.revokeObjectURL(url);
                                           } catch (fallbackError) {
                                             console.error('All download methods failed:', fallbackError);
-                                            // Last resort: open in new tab
                                             window.open(img.link, '_blank');
                                           }
                                         }
                                       }}
-                                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110 bg-primary/90 hover:bg-primary text-black rounded-full p-2 shadow-lg hover:shadow-primary/50"
+                                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 group-hover:scale-110 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg p-2.5 shadow-2xl hover:shadow-primary/60 backdrop-blur-sm"
                                       title="Download Image"
                                     >
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                       </svg>
                                     </button>
