@@ -57,14 +57,27 @@ const fetchSearchResults = async (query: string, includeImages: boolean = false)
     
     // Only fetch images if the query explicitly asks for visual content
     if (includeImages) {
-      const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&searchType=image&imgSize=huge&num=5`;
+      // Enhance query with quality keywords for better HD/4K results
+      const qualityQuery = `${query} high quality HD 4K`;
+      const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(qualityQuery)}&searchType=image&imgSize=huge&imgType=photo&num=10`;
       const imageResponse = await fetch(imageUrl);
       const imageData = imageResponse.ok ? await imageResponse.json() : null;
-      imageResults = imageData?.items?.slice(0, 5).map((item: any) => ({
-        title: item.title,
-        link: item.link,
-        thumbnail: item.image?.thumbnailLink
-      })) || [];
+      
+      // Deduplicate images by URL and title
+      const uniqueImages = new Map();
+      imageData?.items?.forEach((item: any) => {
+        const imageUrl = item.link;
+        if (!uniqueImages.has(imageUrl)) {
+          uniqueImages.set(imageUrl, {
+            title: item.title,
+            link: imageUrl,
+            thumbnail: item.image?.thumbnailLink
+          });
+        }
+      });
+      
+      // Get top 5 unique high-quality images
+      imageResults = Array.from(uniqueImages.values()).slice(0, 5);
     }
 
     return {
