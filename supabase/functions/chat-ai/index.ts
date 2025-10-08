@@ -97,8 +97,26 @@ serve(async (req) => {
     let searchContext = '';
     let searchResults = null;
     const shouldFetchImages = needsImages(message);
+    const shouldSearch = needsSearch(message);
     
-    if (needsSearch(message) || shouldFetchImages) {
+    // If user only wants images (no info keywords), return images directly
+    if (shouldFetchImages && !shouldSearch) {
+      searchResults = await fetchSearchResults(message, true);
+      if (searchResults && searchResults.images && searchResults.images.length > 0) {
+        return new Response(JSON.stringify({
+          response: 'SYSTEM_ASSISTANT@system 🖼️ Here are the top images I found for you:',
+          searchResults: {
+            images: searchResults.images,
+            web: []
+          }
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+    
+    // For info requests or mixed requests, fetch search data and process through Gemini
+    if (shouldSearch || shouldFetchImages) {
       searchResults = await fetchSearchResults(message, shouldFetchImages);
       if (searchResults) {
         searchContext = '\n\n📊 REAL-TIME SEARCH DATA:\n\n';
