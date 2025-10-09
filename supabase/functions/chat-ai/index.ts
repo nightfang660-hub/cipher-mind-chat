@@ -28,10 +28,32 @@ const needsImages = (query: string): boolean => {
     'image', 'images', 'picture', 'pictures', 'photo', 'photos',
     'show me', 'look like', 'looks like', 'appearance', 'visual',
     'see', 'view', 'gallery', 'screenshot', 'pic', 'pics',
-    'how does', 'what does', 'design', 'style', 'color', 'face'
+    'how does', 'what does', 'design', 'style', 'color', 'face',
+    'img', 'provide an img', 'provide img', 'show img', 'display img',
+    'can you provide', 'give me image', 'send image', 'share image'
   ];
   const lowerQuery = query.toLowerCase();
   return imageKeywords.some(keyword => lowerQuery.includes(keyword));
+};
+
+// Extract topic from conversation context for image search
+const extractTopicFromContext = (message: string, context?: any[]): string => {
+  // If user is asking for images in follow-up, extract topic from recent messages
+  const isImageRequest = message.toLowerCase().match(/^(can you |please |could you )?(provide|show|display|send|give me) (an? )?(img|image|picture|photo)/);
+  
+  if (isImageRequest && context && context.length > 0) {
+    // Get last few user messages to extract the topic
+    const recentUserMessages = context
+      .filter((msg: any) => msg.role === 'user')
+      .slice(-3)
+      .map((msg: any) => msg.content)
+      .join(' ');
+    
+    // Return the topic from previous messages
+    return recentUserMessages || message;
+  }
+  
+  return message;
 };
 
 // Enhanced search: Fetch web results and optionally images
@@ -112,12 +134,18 @@ serve(async (req) => {
     const shouldFetchImages = needsImages(message);
     const shouldSearch = needsSearch(message);
     
-    // If user only wants images (no info keywords), return images directly
-    if (shouldFetchImages && !shouldSearch) {
-      searchResults = await fetchSearchResults(message, true);
-      if (searchResults && searchResults.images && searchResults.images.length > 0) {
+    // If user wants images, extract topic from context and fetch
+    if (shouldFetchImages) {
+      const topicQuery = extractTopicFromContext(message, context);
+      console.log('Fetching images for topic:', topicQuery);
+      searchResults = await fetchSearchResults(topicQuery, true);
+      
+      // If this is primarily an image request (not asking for info), return images directly
+      const isImageOnlyRequest = message.toLowerCase().match(/^(can you |please |could you )?(provide|show|display|send|give me) (an? )?(img|image|picture|photo)/);
+      
+      if ((isImageOnlyRequest || !shouldSearch) && searchResults?.images?.length > 0) {
         return new Response(JSON.stringify({
-          response: 'SYSTEM_ASSISTANT@system 🖼️ Here are the top images I found for you:',
+          response: `SYSTEM_ASSISTANT@system 🖼️ Here are high-quality images about "${topicQuery}":`,
           searchResults: {
             images: searchResults.images,
             web: []
