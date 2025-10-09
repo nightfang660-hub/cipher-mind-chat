@@ -223,7 +223,8 @@ const Chat: React.FC = () => {
         id: msg.id,
         content: msg.content,
         isUser: msg.is_user,
-        timestamp: new Date(msg.created_at)
+        timestamp: new Date(msg.created_at),
+        searchResults: msg.search_results ? JSON.parse(msg.search_results as string) : undefined
       })) || [];
       
       setMessages(loadedMessages);
@@ -266,14 +267,15 @@ const Chat: React.FC = () => {
     }
   };
 
-  const saveMessage = async (conversationId: string, content: string, isUser: boolean) => {
+  const saveMessage = async (conversationId: string, content: string, isUser: boolean, searchResults?: SearchResult) => {
     try {
       await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
           content: content,
-          is_user: isUser
+          is_user: isUser,
+          search_results: searchResults ? JSON.stringify(searchResults) : null
         });
     } catch (error) {
       console.error('Error saving message:', error);
@@ -364,7 +366,7 @@ const Chat: React.FC = () => {
       
       setMessages(prev => [...prev, aiMessage]);
       setTypingMessageId(aiMessage.id);
-      await saveMessage(conversationId, aiMessage.content, false);
+      await saveMessage(conversationId, aiMessage.content, false, aiMessage.searchResults);
     } catch (error) {
       console.error('Error getting AI response:', error);
       const errorMessage: Message = {

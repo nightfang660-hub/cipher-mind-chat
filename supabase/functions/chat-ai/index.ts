@@ -98,8 +98,8 @@ const fetchSearchResults = async (query: string, includeImages: boolean = false)
         }
       });
       
-      // Get top 5 unique high-quality images
-      imageResults = Array.from(uniqueImages.values()).slice(0, 5);
+      // Get top 6 unique high-quality images
+      imageResults = Array.from(uniqueImages.values()).slice(0, 6);
     }
 
     return {
