@@ -224,7 +224,7 @@ const Chat: React.FC = () => {
         content: msg.content,
         isUser: msg.is_user,
         timestamp: new Date(msg.created_at),
-        searchResults: msg.search_results ? JSON.parse(msg.search_results as string) : undefined
+        searchResults: msg.search_results as SearchResult | undefined
       })) || [];
       
       setMessages(loadedMessages);
@@ -271,12 +271,12 @@ const Chat: React.FC = () => {
     try {
       await supabase
         .from('messages')
-        .insert({
+        .insert([{
           conversation_id: conversationId,
           content: content,
           is_user: isUser,
-          search_results: searchResults ? JSON.stringify(searchResults) : null
-        });
+          search_results: searchResults as any || null
+        }]);
     } catch (error) {
       console.error('Error saving message:', error);
     }
