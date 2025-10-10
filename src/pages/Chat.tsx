@@ -756,87 +756,61 @@ const Chat: React.FC = () => {
                             <div className="mt-6 p-4 rounded-lg bg-card/30 border border-primary/20 backdrop-blur-sm">
                               <div className="flex items-center gap-2 text-base font-mono text-primary mb-4">
                                 <Sparkles className="w-5 h-5" />
-                                <span className="font-bold">Image Results</span>
-                                <span className="text-xs text-muted-foreground ml-2">({message.searchResults.images.length} images found)</span>
+                                <span className="font-bold">Visual Results</span>
+                                <span className="text-xs text-muted-foreground ml-2">({message.searchResults.images.length} high-quality images)</span>
                               </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                {message.searchResults.images.map((img, idx) => (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {message.searchResults.images.slice(0, 6).map((img, idx) => (
                                   <div 
                                     key={idx} 
-                                    className="relative group overflow-hidden rounded-xl border-2 border-primary/30 bg-background/80 backdrop-blur-lg shadow-2xl hover:shadow-primary/40 hover:border-primary transition-all duration-500 hover:-translate-y-2 cursor-pointer"
+                                    className="relative group overflow-hidden rounded-lg border border-primary/20 bg-background/50 backdrop-blur-sm shadow-lg hover:shadow-primary/30 hover:border-primary/50 transition-all duration-300"
                                   >
                                     {/* Image Container with fixed aspect ratio */}
-                                    <div className="aspect-video relative overflow-hidden bg-muted/20">
+                                    <div className="aspect-video relative overflow-hidden bg-muted/10">
                                       <img 
                                         src={img.link}
-                                        alt={img.title}
-                                        className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+                                        alt={img.title || `Visual result ${idx + 1}`}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                         loading="lazy"
                                         onError={(e) => {
-                                          (e.target as HTMLImageElement).src = img.thumbnail || img.link;
+                                          (e.target as HTMLImageElement).src = img.thumbnail || '/placeholder.svg';
                                         }}
                                       />
-                                      {/* Enhanced gradient overlay */}
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
+                                      {/* Subtle gradient overlay on hover */}
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                     </div>
                                     
-                                    {/* Image info overlay */}
-                                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                                      <p className="text-sm font-mono font-semibold line-clamp-2 drop-shadow-lg mb-1">{img.title}</p>
-                                      <p className="text-xs text-white/70 font-mono">Click to download</p>
-                                    </div>
-                                    
-                                    {/* Download button overlay */}
+                                    {/* Download button overlay - always visible on mobile, hover on desktop */}
                                     <button
                                       onClick={async (e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         try {
-                                          const { data, error } = await supabase.functions.invoke('download-image', {
-                                            body: { imageUrl: img.link }
-                                          });
-
-                                          if (error) throw error;
-
-                                          const blob = new Blob([data], { type: 'image/jpeg' });
+                                          // Direct download from Google
+                                          const response = await fetch(img.link);
+                                          const blob = await response.blob();
                                           const url = window.URL.createObjectURL(blob);
                                           const link = document.createElement('a');
                                           link.href = url;
-                                          
-                                          const filename = img.title 
-                                            ? `${img.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.jpg`
-                                            : `image_${Date.now()}.jpg`;
+                                          const filename = `image-${idx + 1}-${Date.now()}.jpg`;
                                           link.download = filename;
-                                          
                                           document.body.appendChild(link);
                                           link.click();
                                           document.body.removeChild(link);
                                           window.URL.revokeObjectURL(url);
                                         } catch (error) {
-                                          console.error('Download failed, trying direct method:', error);
-                                          try {
-                                            const response = await fetch(img.link);
-                                            const blob = await response.blob();
-                                            const url = window.URL.createObjectURL(blob);
-                                            const link = document.createElement('a');
-                                            link.href = url;
-                                            link.download = img.title || `image_${Date.now()}.jpg`;
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            document.body.removeChild(link);
-                                            window.URL.revokeObjectURL(url);
-                                          } catch (fallbackError) {
-                                            console.error('All download methods failed:', fallbackError);
-                                            window.open(img.link, '_blank');
-                                          }
+                                          console.error('Download failed:', error);
+                                          // Fallback: open in new tab
+                                          window.open(img.link, '_blank');
                                         }
                                       }}
-                                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-110 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-3 shadow-2xl hover:shadow-primary/70 backdrop-blur-md z-10"
-                                      title="Download Image"
+                                      className="absolute bottom-3 right-3 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 bg-primary/90 hover:bg-primary text-primary-foreground rounded-lg px-3 py-2 shadow-lg backdrop-blur-sm flex items-center gap-2 text-sm font-medium z-10"
+                                      title="Download high-quality image"
                                     >
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                       </svg>
+                                      <span className="hidden sm:inline">Download</span>
                                     </button>
                                   </div>
                                 ))}
