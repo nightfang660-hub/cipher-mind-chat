@@ -5,6 +5,3 @@ verify_jwt = false
 
 [functions.download-image]
 verify_jwt = false
-
-[functions.send-confirmation-email]
-verify_jwt = false
