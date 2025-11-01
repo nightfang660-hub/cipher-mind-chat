@@ -80,7 +80,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending confirmation email to: ${email}`);
 
     const emailResponse = await resend.emails.send({
-      from: "Cipher Mind <onboarding@resend.dev>",
+      from: "ciphermind <team@ciphermind.com>",
       to: [email],
       subject: "Confirm your Cipher Mind account",
       html: getEmailTemplate(confirmationUrl),
