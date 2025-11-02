@@ -44,32 +44,33 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
   };
 
   return (
-    <div className="relative my-2 md:my-4 w-full max-w-full overflow-hidden">
-      <div className="flex items-center justify-between bg-background rounded-t-lg px-2 md:px-4 py-1.5 md:py-2 gap-2">
-        <span className="text-primary font-mono text-xs md:text-sm truncate flex-1 min-w-0">{language}</span>
-        <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-          <div className="flex items-center gap-1 md:gap-1.5">
-            <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-green-500"></div>
-            <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-yellow-500"></div>
+    <div className="relative my-3 md:my-6 w-full max-w-full overflow-hidden">
+      {/* Terminal Header */}
+      <div className="flex items-center justify-between bg-background rounded-t-lg px-3 md:px-5 py-2 md:py-3 gap-2 border-b border-primary/20">
+        <span className="text-primary font-mono text-xs md:text-base font-semibold truncate flex-1 min-w-0">
+          {language}
+        </span>
+        <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-green-500 shadow-lg shadow-green-500/50"></div>
+            <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/50"></div>
             <div 
               onClick={handleCopy}
-              className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full cursor-pointer transition-all duration-200 touch-manipulation ${
+              className={`w-3 h-3 md:w-4 md:h-4 rounded-full cursor-pointer transition-all duration-200 touch-manipulation ${
                 copied 
-                  ? 'bg-green-500 scale-110 shadow-lg shadow-green-500/50' 
-                  : 'bg-red-500 hover:bg-red-400 hover:scale-110 hover:shadow-lg hover:shadow-red-500/50'
+                  ? 'bg-green-500 scale-110 shadow-xl shadow-green-500/70' 
+                  : 'bg-red-500 hover:bg-red-400 hover:scale-110 hover:shadow-xl hover:shadow-red-500/70'
               }`}
               title={copied ? "Copied!" : "Click to copy code"}
             ></div>
           </div>
         </div>
       </div>
-      <div className="rounded-b-lg overflow-hidden w-full">
+      
+      {/* Code Content */}
+      <div className="rounded-b-lg overflow-hidden w-full bg-background border border-primary/10">
         <div 
-          className="max-h-[80vh] overflow-x-auto overflow-y-auto scrollbar-hidden w-full"
-          style={{
-            scrollbarWidth: 'none',
-            scrollbarColor: 'transparent transparent'
-          }}
+          className="max-h-[70vh] md:max-h-[80vh] overflow-x-auto overflow-y-auto enhanced-scroll w-full"
         >
           <SyntaxHighlighter
             language={language}
@@ -78,17 +79,20 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
               margin: 0,
               background: 'hsl(var(--background))',
               borderRadius: '0 0 8px 8px',
-              padding: window.innerWidth < 640 ? '8px' : '12px',
-              minWidth: 'fit-content',
-              maxWidth: 'none',
+              padding: window.innerWidth < 768 ? '12px 16px' : '20px 24px',
+              minWidth: '100%',
+              maxWidth: '100%',
               whiteSpace: 'pre',
               overflow: 'visible',
-              fontSize: window.innerWidth < 640 ? '11px' : '13px',
-              display: 'inline-block'
+              fontSize: window.innerWidth < 768 ? '13px' : '15px',
+              lineHeight: window.innerWidth < 768 ? '1.6' : '1.8',
+              display: 'block',
+              wordBreak: 'break-word'
             }}
-            wrapLines={false}
-            wrapLongLines={false}
+            wrapLines={true}
+            wrapLongLines={true}
             PreTag="div"
+            showLineNumbers={false}
           >
             {code}
           </SyntaxHighlighter>

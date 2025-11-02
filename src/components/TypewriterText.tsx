@@ -6,7 +6,7 @@ interface TypewriterTextProps {
   onComplete?: () => void;
 }
 
-const TypewriterText: React.FC<TypewriterTextProps> = ({ text, speed = 6, onComplete }) => {
+const TypewriterText: React.FC<TypewriterTextProps> = ({ text, speed = 1, onComplete }) => {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
 
