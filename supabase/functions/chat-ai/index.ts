@@ -10,6 +10,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Content moderation: Check for inappropriate/adult content requests
+const isInappropriateContent = (query: string): boolean => {
+  const lowerQuery = query.toLowerCase();
+  const inappropriateKeywords = [
+    'porn', 'sex', 'sexy', 'nude', 'naked', 'nsfw', 'adult', 'xxx', 'explicit',
+    'erotic', 'sexual', '18+', 'hentai', 'fetish', 'obscene', 'vulgar',
+    'inappropriate', 'seductive', 'intimate', 'provocative', 'lewd',
+    'pornography', 'pornographic', 'intercourse', 'orgasm', 'masturbat',
+    'breast', 'nipple', 'genitals', 'penis', 'vagina', 'anal',
+    'rape', 'violence', 'gore', 'disturbing', 'graphic violence'
+  ];
+  
+  return inappropriateKeywords.some(keyword => lowerQuery.includes(keyword));
+};
+
 // Enhanced intent detection: Check if query needs real-time/search data
 const needsSearch = (query: string): boolean => {
   const searchKeywords = [
@@ -129,6 +144,20 @@ serve(async (req) => {
 
     if (!geminiApiKey) {
       throw new Error('GEMINI_API_KEY not found');
+    }
+
+    // CRITICAL: Check for inappropriate content BEFORE any API calls
+    if (isInappropriateContent(message)) {
+      console.log('⚠️ Blocked inappropriate content request:', message);
+      return new Response(
+        JSON.stringify({
+          response: "SYSTEM_ASSISTANT@system ⚠️ I cannot provide adult content, explicit images, or inappropriate material. I'm designed to be a helpful and safe AI assistant. Please ask me something else - I'm here to help with information, technology, science, education, and much more! 😊"
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
     }
 
     // Check if we need to fetch search results
