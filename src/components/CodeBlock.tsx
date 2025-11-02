@@ -50,24 +50,18 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
         <span className="text-primary font-mono text-xs md:text-base font-semibold truncate flex-1 min-w-0">
           {language}
         </span>
-        <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-green-500 shadow-lg shadow-green-500/50"></div>
-            <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/50"></div>
-            <button 
-              onClick={handleCopy}
-              className={`text-lg md:text-xl cursor-pointer transition-all duration-200 touch-manipulation border-none bg-transparent p-1 ${
-                copied 
-                  ? 'text-green-500 scale-110' 
-                  : 'text-primary hover:text-primary/80 hover:scale-110'
-              }`}
-              title={copied ? "Copied!" : "Click to copy code"}
-              aria-label="Copy code"
-            >
-              ⧉
-            </button>
-          </div>
-        </div>
+        <button 
+          onClick={handleCopy}
+          className={`text-2xl md:text-3xl cursor-pointer transition-all duration-300 border-none bg-transparent p-2 md:p-3 ${
+            copied 
+              ? 'text-green-500 scale-125 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]' 
+              : 'text-primary hover:text-primary/90 hover:scale-125 hover:drop-shadow-[0_0_8px_rgba(0,255,65,0.4)]'
+          }`}
+          title={copied ? "Copied!" : "Click to copy code"}
+          aria-label="Copy code"
+        >
+          ⧉
+        </button>
       </div>
       
       {/* Code Content */}
