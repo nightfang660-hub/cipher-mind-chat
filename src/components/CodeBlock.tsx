@@ -54,15 +54,18 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', code }) => {
           <div className="flex items-center gap-1.5 md:gap-2">
             <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-green-500 shadow-lg shadow-green-500/50"></div>
             <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/50"></div>
-            <div 
+            <button 
               onClick={handleCopy}
-              className={`w-3 h-3 md:w-4 md:h-4 rounded-full cursor-pointer transition-all duration-200 touch-manipulation ${
+              className={`text-lg md:text-xl cursor-pointer transition-all duration-200 touch-manipulation border-none bg-transparent p-1 ${
                 copied 
-                  ? 'bg-green-500 scale-110 shadow-xl shadow-green-500/70' 
-                  : 'bg-red-500 hover:bg-red-400 hover:scale-110 hover:shadow-xl hover:shadow-red-500/70'
+                  ? 'text-green-500 scale-110' 
+                  : 'text-primary hover:text-primary/80 hover:scale-110'
               }`}
               title={copied ? "Copied!" : "Click to copy code"}
-            ></div>
+              aria-label="Copy code"
+            >
+              ⧉
+            </button>
           </div>
         </div>
       </div>
