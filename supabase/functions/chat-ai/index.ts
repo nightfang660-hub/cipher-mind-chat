@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const geminiApiKey = "AIzaSyDIonhKwOX92rcBtLnmvtxTYVx13-ioolg";
+const geminiApiKey = "AIzaSyCk5FUx6jSSta8wgNg0ztLLKEN2sYLkZ8E";
 const googleSearchApiKey = "AIzaSyDNZJ9670CSXI0hSyNqFovMGxuRqbn29YE";
 const searchEngineId = "558348571e0414fd7";
 
