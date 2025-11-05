@@ -1,9 +1,9 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const geminiApiKey = "AIzaSyCk5FUx6jSSta8wgNg0ztLLKEN2sYLkZ8E";
-const googleSearchApiKey = "AIzaSyDNZJ9670CSXI0hSyNqFovMGxuRqbn29YE";
-const searchEngineId = "558348571e0414fd7";
+const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+const googleSearchApiKey = Deno.env.get("GOOGLE_SEARCH_API_KEY");
+const searchEngineId = Deno.env.get("GOOGLE_SEARCH_ENGINE_ID");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
