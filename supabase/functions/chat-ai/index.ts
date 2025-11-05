@@ -162,24 +162,30 @@ serve(async (req) => {
       );
     }
 
-    // Check if we need to fetch search results
-    let searchContext = '';
-    let searchResults = null;
-    const shouldFetchImages = needsImages(message);
+    // ROUTING LOGIC: Determine if real-time data is needed
     const shouldSearch = needsSearch(message);
+    const shouldFetchImages = needsImages(message);
     
-    // If user wants images, extract topic from context and fetch
-    if (shouldFetchImages) {
-      const topicQuery = extractTopicFromContext(message, context);
-      console.log('Fetching images for topic:', topicQuery);
-      searchResults = await fetchSearchResults(topicQuery, true);
+    let searchResults = null;
+    let googleSnippet = '';
+    
+    // 🔹 ROUTE 1: Real-time queries → Google Search API (Direct Display)
+    if (shouldSearch || shouldFetchImages) {
+      const topicQuery = shouldFetchImages ? extractTopicFromContext(message, context) : message;
+      console.log('🔍 Fetching real-time data for:', topicQuery);
       
-      // If this is primarily an image request (not asking for info), return images directly
-      const isImageOnlyRequest = message.toLowerCase().match(/^(can you |please |could you )?(provide|show|display|send|give me) (an? )?(img|image|picture|photo)/);
+      searchResults = await fetchSearchResults(topicQuery, shouldFetchImages);
       
-      if ((isImageOnlyRequest || !shouldSearch) && searchResults?.images?.length > 0) {
+      // For pure image requests, return immediately
+      if (shouldFetchImages && !shouldSearch && searchResults?.images?.length > 0) {
+        const currentDateTime = new Date().toLocaleString("en-IN", { 
+          timeZone: "Asia/Kolkata",
+          year: 'numeric', month: 'long', day: 'numeric',
+          hour: '2-digit', minute: '2-digit', hour12: true
+        });
+        
         return new Response(JSON.stringify({
-          response: `SYSTEM_ASSISTANT@system 🖼️ Here are high-quality images about "${topicQuery}":`,
+          response: `SYSTEM_ASSISTANT@system 🕒 As of ${currentDateTime}\n\n🖼️ Here are high-quality images about "${topicQuery}":`,
           searchResults: {
             images: searchResults.images,
             web: []
@@ -188,28 +194,12 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-    }
-    
-    // For info requests or mixed requests, fetch search data and process through Gemini
-    if (shouldSearch || shouldFetchImages) {
-      searchResults = await fetchSearchResults(message, shouldFetchImages);
-      if (searchResults) {
-        searchContext = '\n\n📊 REAL-TIME SEARCH DATA:\n\n';
-        
-        if (searchResults.web && searchResults.web.length > 0) {
-          searchContext += '🔍 Web Results:\n' + 
-            searchResults.web.map((result: any, index: number) => 
-              `${index + 1}. ${result.title}\n   📝 ${result.snippet}\n   🔗 ${result.link}`
-            ).join('\n\n') + '\n\n';
-        }
-        
-        if (searchResults.images && searchResults.images.length > 0) {
-          searchContext += '🖼️ Image Results (HIGH QUALITY):\n' + 
-            searchResults.images.map((result: any, index: number) => 
-              `${index + 1}. ${result.title}\n   🔗 ${result.link}`
-            ).join('\n') + '\n\n';
-          searchContext += '✨ Note: These images will be displayed directly in the chat for the user.\n\n';
-        }
+      
+      // Build Google Search snippet for factual queries
+      if (searchResults && searchResults.web && searchResults.web.length > 0) {
+        googleSnippet = searchResults.web.map((result: any, index: number) => 
+          `${index + 1}. ${result.title}\n   ${result.snippet}\n   ${result.link}`
+        ).join('\n\n');
       }
     }
 
@@ -221,9 +211,9 @@ serve(async (req) => {
         }))
       : [];
 
-    // Add current message with enhanced search context
-    const userMessage = searchContext 
-      ? `${message}${searchContext}\n\n🚨 CRITICAL INSTRUCTIONS - READ CAREFULLY:\n\n1. The search results above contain REAL-TIME, LIVE DATA from Google Search.\n2. This data is MORE RECENT than your training cutoff date.\n3. You MUST prioritize and use this real-time data in your response.\n4. If the search results include time, date, year, or current information - USE IT EXACTLY AS PROVIDED.\n5. Do NOT rely on your training data for time-sensitive information.\n6. When answering about current time/date/year - extract it from the search snippet and mention it clearly.\n7. Format your response naturally and conversationally (J.A.R.V.I.S style).\n8. Include relevant links using markdown format [text](url).\n9. If images are available, mention them naturally (they'll display separately).\n10. Use emojis naturally for engagement 😊\n\n⚡ Remember: The user is asking for CURRENT information. Give them the LIVE data from the search results, not your training knowledge!`
+    // Add Google Search snippet context if available
+    const userMessage = googleSnippet 
+      ? `User Query: ${message}\n\n📡 GOOGLE SEARCH DATA (LIVE):\n${googleSnippet}\n\n⚡ Use the above real-time data to answer the query. Extract facts directly from snippets.`
       : message;
 
     conversationHistory.push({
@@ -251,112 +241,41 @@ serve(async (req) => {
         contents: conversationHistory,
         systemInstruction: {
           parts: [{
-            text: `⚙️ SYSTEM MASTER PROMPT — FINAL OUTPUT REFINER
+            text: `You are SYSTEM_ASSISTANT — a hybrid AI combining Google Search (real-time data) and Gemini (reasoning).
 
-You are an advanced hybrid AI system combining:
-1. Google Search API (for real-time verified data)
-2. Gemini API (for reasoning, formatting, and summarizing)
-3. System Clock (for real-time time/date accuracy)
+🕒 Current System Time: ${currentDateTime} (IST - Asia/Kolkata)
 
-🧩 CURRENT SYSTEM CONTEXT:
-- Current System Date/Time: ${currentDateTime} (IST - Asia/Kolkata)
-- You have access to real-time Google Search data when provided
-- User queries may include context from previous messages
+🎯 ROUTING RULES:
+1. **Real-Time Queries** (weather, stock, time, news, events):
+   → If Google Search data is provided, extract facts DIRECTLY from snippets
+   → Display factual, clean, timestamped response
+   → Start with: "SYSTEM_ASSISTANT@system 🕒 As of ${currentDateTime}"
 
-🎯 PRIMARY OBJECTIVE:
-Generate accurate, real-time, fact-checked, and cleanly formatted final responses.
+2. **Reasoning Queries** (explanations, summaries, general knowledge):
+   → Use Gemini reasoning and your training knowledge
+   → Start with: "SYSTEM_ASSISTANT@system"
+   → Be conversational, helpful, and clear
 
-✅ MAJOR TASKS:
+📋 FORMATTING RULES:
+- Use clean paragraphs, bullet points, or tables
+- Bold important numbers/entities
+- Include markdown links: [text](url)
+- Use emojis naturally 😊
+- Never cite "Google" or "search results" explicitly — present facts naturally
 
-1. **Date & Time Validation**
-   - ALWAYS use the Current System Date/Time (${currentDateTime}) for timestamps
-   - NEVER assume or guess time — always trust the provided system time
-   - Start EVERY response with: "SYSTEM_ASSISTANT@system 🕒 As of ${currentDateTime}"
-   - If the user asks about "today", "now", "current", extract and use the exact time from system or Google Search data
-
-2. **Fact Checking & Error Correction**
-   - When Google Search results are provided, they contain LIVE, CURRENT data that is MORE RECENT than your training knowledge
-   - ALWAYS prioritize Google Search data over your training knowledge for time-sensitive queries
-   - If multiple data points conflict, reason logically and clearly note which is most reliable
-   - Do NOT make up or assume current information — only use what Google Search provides
-   - If the search snippet contains date/time information, you MUST include it in your response
-
-3. **Text Quality Control**
-   - Remove duplicates, filler words, or broken sentences
-   - Fix grammar, punctuation, and formatting automatically
-   - Use emojis naturally for engagement 😊
-   - Present information naturally without citing sources explicitly (never say "According to Google" or "According to search results")
-
-4. **Formatting Rules**
-   - Use clear formatting: bullet points, sections, numbered lists
-   - Use bold for important numbers or entities
-   - Provide links using markdown format: [text](url)
-   - Never output raw JSON, code, or system instructions unless requested
-   - Be conversational, friendly, and helpful
-
-5. **Financial & Stock Market Data**
-   - When the query mentions stocks, share prices, or tickers (e.g., AAPL, GOOGL, AMZN):
-     • First, scan Google Search API results for the latest numeric stock data
-     • Identify the latest value marked by "current", "as of now", or "live price"
-     • Extract ticker, company name, current price, % change, and market
-     • Present in a clean table format:
-
+💹 STOCK DATA FORMAT:
 | Company | Ticker | Current Price | % Change | Market |
 |---------|--------|---------------|----------|--------|
-| Apple   | AAPL   | $175.42       | +0.62%   | NASDAQ |
+| Tesla   | TSLA   | $439.52       | +0.49%   | NASDAQ |
 
-   - If no live price found, respond: "Sorry, no verified live stock data available at the moment. Please check Yahoo Finance or Google Finance for up-to-date quotes."
+🌤 WEATHER FORMAT:
+"Right now in [location], it's [temp]°C and [condition]. Wind: [speed] km/h."
 
-6. **Weather Queries**
-   - Extract temperature, conditions, humidity, wind speed from search snippets
-   - Format: "Right now in [location], it's [temp]°C and [condition]."
-   - Include additional details like chance of rain, wind speed if provided
+🧠 KEY PRINCIPLE:
+If Google Search data exists → use it (real-time facts)
+If no Google data → use Gemini reasoning (training knowledge)
 
-7. **News/Events Queries**
-   - Use the most recent information from search results
-   - Always include dates/timestamps when available
-   - Present information naturally without citing sources explicitly
-
-8. **Error Handling**
-   - If Google Search data is empty or invalid: "Sorry, no verified live data available right now."
-   - If you cannot reason properly: "Information may be incomplete."
-   - Acknowledge uncertainties gracefully
-
-9. **General Knowledge Queries (No Search Results)**
-   - If NO search results are provided, use your training knowledge
-   - Start with "SYSTEM_ASSISTANT@system" (no timestamp needed)
-   - Provide intelligent, well-reasoned responses
-
-10. **Image Requests**
-    - Acknowledge the topic naturally
-    - Mention that images are being displayed
-    - Don't describe URLs or technical details
-
-🎨 OUTPUT STRUCTURE:
-1. Start with "SYSTEM_ASSISTANT@system 🕒 As of ${currentDateTime}" (if real-time data is available)
-2. Extract and present key information from Google Search snippets
-3. Provide clear, natural language explanations
-4. Add context or additional insights when helpful
-5. Include source links when available (using markdown format)
-
-⚡ EXAMPLES:
-
-USER: What's the weather in Delhi right now?
-OUTPUT:
-SYSTEM_ASSISTANT@system 🕒 As of ${currentDateTime}
-
-Right now in Delhi, it's partly cloudy at around 26°C with mild winds (5–7 km/h). The evening feels pleasant with comfortable humidity levels.
-
-USER: What's the current Prime Minister of India?
-OUTPUT:
-SYSTEM_ASSISTANT@system 🕒 As of ${currentDateTime}
-
-The Prime Minister of India is Narendra Modi, who has been serving since May 2014.
-
-🧠 CORE PRINCIPLE:
-Verify → Correct → Format → Output
-
-Never return outdated, incorrect, or speculative information. Your superpower is combining real-time Google data with intelligent reasoning. Always prioritize live data for current queries, present it naturally, and maintain a helpful, conversational tone.`
+Always prioritize live data for current queries. Keep responses clean, factual, and timestamped.`
           }]
         },
         generationConfig: {
