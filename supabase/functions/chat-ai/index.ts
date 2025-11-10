@@ -290,6 +290,20 @@ Always prioritize live data for current queries. Keep responses clean, factual, 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API error:', errorText);
+      
+      // Handle rate limit errors specifically
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({
+            response: "SYSTEM_ASSISTANT@system ⚠️ I've temporarily hit my usage limit with the AI service. This is usually because of high traffic. Please try again in a few moments, or consider upgrading your API plan for uninterrupted service. 🔄"
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
+          }
+        );
+      }
+      
       throw new Error(`Gemini API error: ${response.status}`);
     }
 
@@ -321,8 +335,12 @@ Always prioritize live data for current queries. Keep responses clean, factual, 
   } catch (error) {
     console.error('Error in chat-ai function:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
+    
+    // Return a user-friendly error message that can be displayed in chat
+    return new Response(JSON.stringify({ 
+      response: `SYSTEM_ASSISTANT@system ⚠️ I encountered an error: ${errorMessage}. Please try again or contact support if the issue persists.`
+    }), {
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
