@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2, Menu, X, Settings, Palette } from 'lucide-react';
+import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2, Menu, X, Settings, Palette, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MatrixRain from '@/components/MatrixRain';
 import TypewriterText from '@/components/TypewriterText';
 import CodeBlock from '@/components/CodeBlock';
@@ -64,6 +65,7 @@ const Chat: React.FC = () => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [tempColorValue, setTempColorValue] = useState('');
+  const [selectedModel, setSelectedModel] = useState<'gpt-5-nano' | 'gpt-5-mini' | 'gpt-5'>('gpt-5-nano');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -326,7 +328,6 @@ const Chat: React.FC = () => {
 
     let conversationId = currentConversationId;
     
-    // Create new conversation if none exists
     if (!conversationId) {
       conversationId = await createNewConversation(inputMessage);
       if (!conversationId) return;
@@ -337,50 +338,108 @@ const Chat: React.FC = () => {
     setInputMessage('');
     setIsLoading(true);
 
+    // Create a placeholder for the AI response
+    const aiMessageId = (Date.now() + 1).toString();
+    const aiMessage: Message = {
+      id: aiMessageId,
+      content: '',
+      isUser: false,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, aiMessage]);
+    setTypingMessageId(aiMessageId);
+
     try {
-      // Build conversation context from recent messages (last 10 messages for context)
-      const recentMessages = messages.slice(-10).map(msg => ({
-        role: msg.isUser ? 'user' : 'assistant',
-        content: msg.content
-      }));
+      const conversationHistory = messages.slice(-10);
       
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: { 
+      const response = await fetch(`https://npowvkfmtbgbwumaprpt.supabase.co/functions/v1/chat-ai`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+        },
+        body: JSON.stringify({
           message: userMessage.content,
-          context: recentMessages
-        }
+          model: selectedModel,
+          conversationHistory: conversationHistory
+        })
       });
 
-      if (error) {
-        console.error('Error calling AI function:', error);
-        throw error;
+      if (!response.ok) {
+        throw new Error('Failed to get response');
       }
 
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: data.response || 'Sorry, I could not process your request.',
-        isUser: false,
-        timestamp: new Date(),
-        searchResults: data.searchResults
-      };
+      const contentType = response.headers.get('content-type');
       
-      setMessages(prev => [...prev, aiMessage]);
-      setTypingMessageId(aiMessage.id);
-      await saveMessage(conversationId, aiMessage.content, false, aiMessage.searchResults);
+      // Check if response is streaming
+      if (contentType?.includes('text/event-stream')) {
+        // Handle streaming response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let accumulatedContent = '';
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.content) {
+                    accumulatedContent += parsed.content;
+                    setMessages(prev => prev.map(msg => 
+                      msg.id === aiMessageId 
+                        ? { ...msg, content: accumulatedContent }
+                        : msg
+                    ));
+                  }
+                } catch (e) {
+                  // Skip malformed JSON
+                }
+              }
+            }
+          }
+        }
+
+        // Save the complete message
+        await saveMessage(conversationId, accumulatedContent, false);
+      } else {
+        // Handle non-streaming response (Google Search results)
+        const data = await response.json();
+        const content = data.response || 'Sorry, I could not process your request.';
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === aiMessageId 
+            ? { ...msg, content, searchResults: data.searchResults }
+            : msg
+        ));
+        
+        await saveMessage(conversationId, content, false, data.searchResults);
+      }
     } catch (error) {
       console.error('Error getting AI response:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: 'Sorry, I encountered an error while processing your request. Please try again.',
-        isUser: false,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      const errorContent = 'Sorry, I encountered an error while processing your request. Please try again.';
+      
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, content: errorContent }
+          : msg
+      ));
+      
       if (conversationId) {
-        await saveMessage(conversationId, errorMessage.content, false);
+        await saveMessage(conversationId, errorContent, false);
       }
     } finally {
       setIsLoading(false);
+      setTypingMessageId(null);
     }
   };
 
@@ -858,6 +917,27 @@ const Chat: React.FC = () => {
         {/* Fixed Bottom Input Area */}
         <div className="flex-shrink-0 p-2 md:p-4 bg-card/50 backdrop-blur-sm">
           <div className="max-w-4xl mx-auto">
+            {/* Model Selection */}
+            <div className="mb-2 flex items-center gap-2 justify-end">
+              <Zap className="w-3 h-3 text-primary" />
+              <Select value={selectedModel} onValueChange={(value: any) => setSelectedModel(value)}>
+                <SelectTrigger className="w-[140px] h-7 text-xs font-mono bg-background/50 border-primary/20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-5-nano" className="font-mono text-xs">
+                    GPT-5 Nano (Fast)
+                  </SelectItem>
+                  <SelectItem value="gpt-5-mini" className="font-mono text-xs">
+                    GPT-5 Mini (Balanced)
+                  </SelectItem>
+                  <SelectItem value="gpt-5" className="font-mono text-xs">
+                    GPT-5 (Powerful)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="flex-1 relative">
               <Textarea
                 value={inputMessage}
