@@ -171,17 +171,7 @@ serve(async (req) => {
         );
       }
 
-      const currentDateTime = new Date().toLocaleString("en-IN", { 
-        timeZone: "Asia/Kolkata",
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-
-      let response = `🕒 As of ${currentDateTime}\n🔍 Query: ${message}\n\n`;
+      let response = ``;
       
       if (searchResults.web?.length > 0) {
         const topResult = searchResults.web[0];

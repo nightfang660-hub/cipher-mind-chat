@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2, Menu, X, Settings, Palette, Zap } from 'lucide-react';
+import { Send, History, User, LogOut, Edit3, Upload, MessageSquare, Sparkles, MoreHorizontal, Trash2, Menu, X, Settings, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,7 +12,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MatrixRain from '@/components/MatrixRain';
 import TypewriterText from '@/components/TypewriterText';
 import CodeBlock from '@/components/CodeBlock';
@@ -65,7 +64,6 @@ const Chat: React.FC = () => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [tempColorValue, setTempColorValue] = useState('');
-  const [selectedModel, setSelectedModel] = useState<'gpt-5-nano' | 'gpt-5-mini' | 'gpt-5'>('gpt-5-nano');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -360,7 +358,7 @@ const Chat: React.FC = () => {
         },
         body: JSON.stringify({
           message: userMessage.content,
-          model: selectedModel,
+          model: 'gpt-5-nano',
           conversationHistory: conversationHistory
         })
       });
@@ -917,27 +915,6 @@ const Chat: React.FC = () => {
         {/* Fixed Bottom Input Area */}
         <div className="flex-shrink-0 p-2 md:p-4 bg-card/50 backdrop-blur-sm">
           <div className="max-w-4xl mx-auto">
-            {/* Model Selection */}
-            <div className="mb-2 flex items-center gap-2 justify-end">
-              <Zap className="w-3 h-3 text-primary" />
-              <Select value={selectedModel} onValueChange={(value: any) => setSelectedModel(value)}>
-                <SelectTrigger className="w-[140px] h-7 text-xs font-mono bg-background/50 border-primary/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gpt-5-nano" className="font-mono text-xs">
-                    GPT-5 Nano (Fast)
-                  </SelectItem>
-                  <SelectItem value="gpt-5-mini" className="font-mono text-xs">
-                    GPT-5 Mini (Balanced)
-                  </SelectItem>
-                  <SelectItem value="gpt-5" className="font-mono text-xs">
-                    GPT-5 (Powerful)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
             <div className="flex-1 relative">
               <Textarea
                 value={inputMessage}
