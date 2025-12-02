@@ -358,7 +358,6 @@ const Chat: React.FC = () => {
         },
         body: JSON.stringify({
           message: userMessage.content,
-          model: 'gpt-5-nano',
           conversationHistory: conversationHistory
         })
       });

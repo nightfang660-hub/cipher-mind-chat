@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const googleSearchApiKey = Deno.env.get("GOOGLE_SEARCH_API_KEY");
 const searchEngineId = Deno.env.get("GOOGLE_SEARCH_ENGINE_ID");
-const openAIApiKey = Deno.env.get("OPENAI_API_KEY");
+const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -103,26 +103,43 @@ const fetchSearchResults = async (query: string, includeImages: boolean = false)
   }
 };
 
-// Call OpenAI with streaming
-const streamOpenAI = async (messages: any[], model: string) => {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openAIApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: model,
-      messages: messages,
-      stream: true,
-      max_completion_tokens: 2000,
-    }),
-  });
+// Call Gemini with streaming
+const streamGemini = async (messages: any[]) => {
+  // Convert messages to Gemini format
+  const contents = messages
+    .filter(msg => msg.role !== 'system')
+    .map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.content }]
+    }));
+
+  const systemInstruction = messages.find(msg => msg.role === 'system')?.content || 
+    'You are a helpful AI assistant. Provide clear, accurate, and thoughtful responses.';
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?key=${geminiApiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: contents,
+        systemInstruction: {
+          parts: [{ text: systemInstruction }]
+        },
+        generationConfig: {
+          temperature: 0.9,
+          maxOutputTokens: 2000,
+        }
+      }),
+    }
+  );
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('OpenAI API error:', response.status, error);
-    throw new Error(`OpenAI API error: ${response.status}`);
+    console.error('Gemini API error:', response.status, error);
+    throw new Error(`Gemini API error: ${response.status}`);
   }
 
   return response.body;
@@ -134,11 +151,11 @@ serve(async (req) => {
   }
 
   try {
-    const { message, model = 'gpt-5-nano', conversationHistory = [] } = await req.json();
+    const { message, conversationHistory = [] } = await req.json();
     
-    console.log('Processing request:', message, 'Model:', model);
+    console.log('Processing request:', message);
 
-    if (!googleSearchApiKey || !searchEngineId || !openAIApiKey) {
+    if (!googleSearchApiKey || !searchEngineId || !geminiApiKey) {
       throw new Error('API credentials not configured');
     }
 
@@ -174,14 +191,12 @@ serve(async (req) => {
       let response = ``;
       
       if (searchResults.web?.length > 0) {
-        const topResult = searchResults.web[0];
-        response += `📄 Information:\n${topResult.snippet}\n\n`;
-        response += `🌐 Source: ${topResult.displayLink}\n`;
+        response += `📄 Information:\n${searchResults.web[0].snippet}\n\n`;
         
-        if (searchResults.web.length > 1) {
-          response += `\n📚 Additional sources:\n`;
-          searchResults.web.slice(1).forEach((result: any, index: number) => {
-            response += `${index + 2}. [${result.title}](${result.link})\n`;
+        if (searchResults.web.length > 0) {
+          response += `\n🔗 Here is the links:\n`;
+          searchResults.web.forEach((result: any, index: number) => {
+            response += `${index + 1}. [${result.title}](${result.link})\n`;
           });
         }
       }
@@ -190,10 +205,12 @@ serve(async (req) => {
 
       const responseData: any = { response };
       if (searchResults.images?.length > 0) {
+        response += `\n\n🖼️ Here is the images:`;
         responseData.searchResults = {
           web: searchResults.web || [],
           images: searchResults.images
         };
+        responseData.response = response;
       }
 
       return new Response(JSON.stringify(responseData), {
@@ -201,8 +218,8 @@ serve(async (req) => {
       });
       
     } else {
-      // Route to OpenAI with streaming
-      console.log('🤖 Routing to OpenAI with model:', model);
+      // Route to Gemini with streaming
+      console.log('🤖 Routing to Gemini AI');
       
       const messages = [
         { 
@@ -216,7 +233,7 @@ serve(async (req) => {
         { role: 'user', content: message }
       ];
 
-      const stream = await streamOpenAI(messages, model);
+      const stream = await streamGemini(messages);
       
       // Create streaming response
       const encoder = new TextEncoder();
@@ -224,28 +241,30 @@ serve(async (req) => {
         async start(controller) {
           const reader = stream.getReader();
           const decoder = new TextDecoder();
+          let buffer = '';
           
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
               
-              const chunk = decoder.decode(value);
-              const lines = chunk.split('\n').filter(line => line.trim() !== '');
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
               
               for (const line of lines) {
                 if (line.startsWith('data: ')) {
-                  const data = line.slice(6);
-                  if (data === '[DONE]') continue;
+                  const jsonStr = line.slice(6).trim();
+                  if (!jsonStr) continue;
                   
                   try {
-                    const parsed = JSON.parse(data);
-                    const content = parsed.choices?.[0]?.delta?.content;
+                    const parsed = JSON.parse(jsonStr);
+                    const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (content) {
                       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                     }
                   } catch (e) {
-                    // Skip malformed JSON
+                    console.error('JSON parse error:', e);
                   }
                 }
               }
