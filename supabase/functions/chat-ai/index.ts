@@ -117,7 +117,7 @@ const streamGemini = async (messages: any[]) => {
     'You are a helpful AI assistant. Provide clear, accurate, and thoughtful responses.';
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?key=${geminiApiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${geminiApiKey}`,
     {
       method: 'POST',
       headers: {
