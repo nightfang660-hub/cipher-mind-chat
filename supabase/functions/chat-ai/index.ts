@@ -103,8 +103,8 @@ const fetchSearchResults = async (query: string, includeImages: boolean = false)
   }
 };
 
-// Call Gemini with streaming
-const streamGemini = async (messages: any[]) => {
+// Call Gemini (non-streaming for reliability)
+const callGemini = async (messages: any[]) => {
   // Convert messages to Gemini format
   const contents = messages
     .filter(msg => msg.role !== 'system')
@@ -117,7 +117,7 @@ const streamGemini = async (messages: any[]) => {
     'You are a helpful AI assistant. Provide clear, accurate, and thoughtful responses.';
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${geminiApiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
     {
       method: 'POST',
       headers: {
@@ -130,7 +130,7 @@ const streamGemini = async (messages: any[]) => {
         },
         generationConfig: {
           temperature: 0.9,
-          maxOutputTokens: 2000,
+          maxOutputTokens: 2048,
         }
       }),
     }
@@ -142,7 +142,14 @@ const streamGemini = async (messages: any[]) => {
     throw new Error(`Gemini API error: ${response.status}`);
   }
 
-  return response.body;
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  
+  if (!text) {
+    throw new Error('No response from Gemini');
+  }
+  
+  return text;
 };
 
 serve(async (req) => {
@@ -218,13 +225,13 @@ serve(async (req) => {
       });
       
     } else {
-      // Route to Gemini with streaming
+      // Route to Gemini AI
       console.log('🤖 Routing to Gemini AI');
       
       const messages = [
         { 
           role: 'system', 
-          content: 'You are a helpful AI assistant. Provide clear, accurate, and thoughtful responses. Use natural language and be conversational.'
+          content: 'You are a helpful AI assistant like ChatGPT. Provide clear, accurate, and thoughtful responses. Use natural language, be conversational, and format responses nicely with markdown when appropriate.'
         },
         ...conversationHistory.map((msg: any) => ({
           role: msg.isUser ? 'user' : 'assistant',
@@ -233,58 +240,10 @@ serve(async (req) => {
         { role: 'user', content: message }
       ];
 
-      const stream = await streamGemini(messages);
+      const aiResponse = await callGemini(messages);
       
-      // Create streaming response
-      const encoder = new TextEncoder();
-      const readableStream = new ReadableStream({
-        async start(controller) {
-          const reader = stream.getReader();
-          const decoder = new TextDecoder();
-          let buffer = '';
-          
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || '';
-              
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  const jsonStr = line.slice(6).trim();
-                  if (!jsonStr) continue;
-                  
-                  try {
-                    const parsed = JSON.parse(jsonStr);
-                    const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (content) {
-                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
-                    }
-                  } catch (e) {
-                    console.error('JSON parse error:', e);
-                  }
-                }
-              }
-            }
-            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-            controller.close();
-          } catch (error) {
-            console.error('Streaming error:', error);
-            controller.error(error);
-          }
-        }
-      });
-
-      return new Response(readableStream, {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive'
-        },
+      return new Response(JSON.stringify({ response: aiResponse }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     
